@@ -1,11 +1,67 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import SearchHero from "@/components/movie/SearchHero";
+import MovieGrid from "@/components/movie/MovieGrid";
+import { useMovieSearch } from "@/hooks/useMovieSearch";
 
 const Index = () => {
+  const { movies, isLoading, isLoadingMore, hasSearched, search, loadMore, showLoadMore } =
+    useMovieSearch();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/8 blur-[120px]" />
+        <div className="absolute top-1/3 -right-20 h-64 w-64 rounded-full bg-accent/6 blur-[100px]" />
+      </div>
+
+      <div className="relative z-10">
+        {!isLoading && (!hasSearched || movies.length === 0) && (
+          <SearchHero onSearch={search} isLoading={isLoading} />
+        )}
+
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex min-h-screen flex-col items-center justify-center gap-4"
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-lg text-muted-foreground font-display">Pensando...</p>
+          </motion.div>
+        )}
+
+        {!isLoading && movies.length > 0 && (
+          <>
+            {/* Compact search bar for results view */}
+            <div className="sticky top-0 z-20 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+              <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-8">
+                <h2 className="font-display text-xl font-bold">
+                  <span className="gradient-text">Cine</span>
+                  <span className="text-foreground">Mente</span>
+                </h2>
+                <button
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Nueva búsqueda
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-8">
+              <MovieGrid
+                movies={movies}
+                isLoadingMore={isLoadingMore}
+                showLoadMore={showLoadMore}
+                onLoadMore={loadMore}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
