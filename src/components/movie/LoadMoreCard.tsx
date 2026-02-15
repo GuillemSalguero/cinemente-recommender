@@ -4,9 +4,10 @@ import { motion } from "framer-motion";
 interface LoadMoreCardProps {
   onClick: () => void;
   isLoading: boolean;
+  remainingCount?: number;
 }
 
-const LoadMoreCard = ({ onClick, isLoading }: LoadMoreCardProps) => {
+const LoadMoreCard = ({ onClick, isLoading, remainingCount = 3 }: LoadMoreCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -26,7 +27,7 @@ const LoadMoreCard = ({ onClick, isLoading }: LoadMoreCardProps) => {
               <Plus className="h-7 w-7 text-primary" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
-              Cargar más
+              Más {remainingCount} films
             </span>
           </>
         )}

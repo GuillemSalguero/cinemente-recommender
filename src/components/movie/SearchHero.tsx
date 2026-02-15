@@ -74,29 +74,28 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
             }}
             placeholder="Quiero algo de suspenso con un giro inesperado..."
             rows={3}
-            className="w-full resize-none rounded-2xl bg-transparent px-5 pt-5 pb-16 text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="w-full resize-none rounded-2xl bg-transparent px-5 py-5 text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
             disabled={isLoading}
           />
-          <div className="absolute bottom-3 right-3">
-            <button
-              type="submit"
-              disabled={isLoading || !query.trim()}
-              className="gradient-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Pensando...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" />
-                  Buscar
-                </>
-              )}
-            </button>
-          </div>
         </div>
+
+        <button
+          type="submit"
+          disabled={isLoading || !query.trim()}
+          className="gradient-primary mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed md:w-auto md:ml-auto md:mt-3"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Pensando...
+            </>
+          ) : (
+            <>
+              <Search className="h-4 w-4" />
+              Buscar Películas
+            </>
+          )}
+        </button>
       </motion.form>
     </motion.section>
   );

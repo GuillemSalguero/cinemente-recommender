@@ -33,6 +33,7 @@ const MovieGrid = ({ movies, isLoadingMore, showLoadMore, onLoadMore }: MovieGri
             <LoadMoreCard
               onClick={() => onLoadMore(true)}
               isLoading={isLoadingMore}
+              remainingCount={Math.min(3, 12 - movies.length)}
             />
           )}
         </div>
