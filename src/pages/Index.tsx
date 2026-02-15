@@ -37,18 +37,17 @@ const Index = () => {
             {/* Compact search bar for results view */}
             <div className="sticky top-0 z-20 border-b border-border/50 bg-background/80 backdrop-blur-xl">
               <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-8">
-                <h2 className="font-display text-xl font-bold">
-                  <span className="gradient-text">Cine</span>
-                  <span className="text-foreground">Mente</span>
-                </h2>
                 <button
                   onClick={() => {
                     window.location.reload();
                   }}
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Nueva búsqueda
+                  ← Nueva búsqueda
                 </button>
+                <span className="text-sm font-medium text-muted-foreground">
+                  {movies.length} recomendaciones
+                </span>
               </div>
             </div>
 
