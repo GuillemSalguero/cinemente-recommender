@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
+import { Heart } from "lucide-react";
 import type { Movie } from "@/types/movie";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface MovieCardProps {
   movie: Movie;
@@ -8,6 +13,20 @@ interface MovieCardProps {
 }
 
 const MovieCard = ({ movie, index, onClick }: MovieCardProps) => {
+  const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const fav = isFavorite(movie.title);
+
+  const handleFav = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Inicia sesión para guardar favoritos");
+      return;
+    }
+    const added = toggleFavorite(movie);
+    toast.success(added ? "Añadida a favoritos ❤️" : "Eliminada de favoritos");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -17,7 +36,6 @@ const MovieCard = ({ movie, index, onClick }: MovieCardProps) => {
       className="group cursor-pointer snap-center flex-shrink-0 w-[80vw] md:w-auto"
     >
       <div className="relative overflow-hidden rounded-xl bg-card transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10">
-        {/* Poster */}
         <div className="relative aspect-[2/3] w-full overflow-hidden">
           {movie.poster_url ? (
             <img
@@ -34,10 +52,22 @@ const MovieCard = ({ movie, index, onClick }: MovieCardProps) => {
             </div>
           )}
 
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-          {/* Tomatometer badge */}
+          {/* Favorite button */}
+          <button
+            onClick={handleFav}
+            className={cn(
+              "absolute top-3 left-3 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all",
+              fav
+                ? "bg-primary/90 text-primary-foreground"
+                : "bg-background/60 text-foreground hover:bg-background/80"
+            )}
+            aria-label={fav ? "Quitar de favoritos" : "Añadir a favoritos"}
+          >
+            <Heart className={cn("h-4 w-4", fav && "fill-current")} />
+          </button>
+
           {movie.tomatometer > 0 && (
             <div className="absolute top-3 right-3 flex items-center gap-1 rounded-lg bg-background/80 px-2.5 py-1 text-xs font-semibold backdrop-blur-sm">
               <span>🍅</span>
@@ -46,7 +76,6 @@ const MovieCard = ({ movie, index, onClick }: MovieCardProps) => {
           )}
         </div>
 
-        {/* Info */}
         <div className="p-4">
           <h3 className="font-display text-base font-semibold text-foreground line-clamp-1 md:text-lg">
             {movie.title}
