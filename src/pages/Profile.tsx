@@ -256,7 +256,53 @@ const Profile = () => {
             )}
           </TabsContent>
 
-          {/* Search shortcut */}
+          {/* History (last 30 days) */}
+          <TabsContent value="history" className="mt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Películas que has consultado en los últimos 30 días.
+              </p>
+              {lastMonth.length > 0 && (
+                <button
+                  onClick={() => {
+                    clearHistory();
+                    toast.success("Historial borrado");
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Limpiar
+                </button>
+              )}
+            </div>
+            {lastMonth.length === 0 ? (
+              <div className="glass rounded-2xl p-12 text-center">
+                <HistoryIcon className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Sin actividad reciente. Abre alguna película para empezar a llenarlo.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {lastMonth.map((entry, i) => (
+                  <div key={`${entry.movie.title}-${entry.viewedAt}`} className="relative">
+                    <MovieCard
+                      movie={entry.movie}
+                      index={i}
+                      onClick={() => setSelected(entry.movie)}
+                    />
+                    <div className="absolute bottom-16 right-2 rounded-md bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur-sm">
+                      {new Date(entry.viewedAt).toLocaleDateString("es-ES", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="search" className="mt-6">
             <div className="glass rounded-2xl p-8 text-center">
               <SearchIcon className="mx-auto mb-3 h-10 w-10 text-primary" />
