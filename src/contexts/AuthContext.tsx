@@ -124,3 +124,9 @@ export const useAuth = () => {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 };
+
+// Public, password-less listing for the "search users" feature.
+export const listAllUsers = (): User[] => {
+  return readUsers().map(({ password, ...safe }) => safe);
+};
+

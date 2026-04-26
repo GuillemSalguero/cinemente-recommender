@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
 import Watchlist from "./pages/Watchlist";
 import Search from "./pages/Search";
+import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/buscar" element={<Search />} />
               <Route path="/favoritos" element={<Favorites />} />
               <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/usuarios" element={<Users />} />
               <Route path="/perfil" element={<Profile />} />
             </Route>
             <Route path="*" element={<NotFound />} />

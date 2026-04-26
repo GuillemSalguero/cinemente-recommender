@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Clock, Film, Sparkles } from "lucide-react";
 import type { Movie } from "@/types/movie";
+import { useHistory } from "@/hooks/useHistory";
 
 interface MovieModalProps {
   movie: Movie | null;
@@ -8,6 +10,13 @@ interface MovieModalProps {
 }
 
 const MovieModal = ({ movie, onClose }: MovieModalProps) => {
+  const { addToHistory } = useHistory();
+
+  useEffect(() => {
+    if (movie) addToHistory(movie);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movie?.title]);
+
   if (!movie) return null;
 
   return (
