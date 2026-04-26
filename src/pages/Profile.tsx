@@ -10,12 +10,14 @@ import {
   Bookmark,
   Search as SearchIcon,
   Trash2,
+  History as HistoryIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useWatchlist } from "@/hooks/useWatchlist";
+import { useHistory } from "@/hooks/useHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
@@ -25,6 +27,7 @@ const Profile = () => {
   const { user, updateProfile, logout } = useAuth();
   const { favorites, removeFavorite } = useFavorites();
   const { watchlist, removeFromWatchlist } = useWatchlist();
+  const { lastMonth, clearHistory } = useHistory();
   const navigate = useNavigate();
   const [name, setName] = useState(user?.name || "");
   const [selected, setSelected] = useState<Movie | null>(null);
