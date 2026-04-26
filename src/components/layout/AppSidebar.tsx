@@ -1,4 +1,4 @@
-import { Search, Heart, User, LogOut, LogIn, Sparkles } from "lucide-react";
+import { Search, SearchCheck, Heart, Bookmark, User, LogOut, LogIn, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -17,8 +17,10 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 const items = [
-  { title: "Buscar", url: "/", icon: Search },
+  { title: "Buscar IA", url: "/", icon: Sparkles },
+  { title: "Búsqueda", url: "/buscar", icon: SearchCheck },
   { title: "Favoritos", url: "/favoritos", icon: Heart },
+  { title: "Watchlist", url: "/watchlist", icon: Bookmark },
   { title: "Perfil", url: "/perfil", icon: User },
 ];
 

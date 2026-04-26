@@ -8,6 +8,8 @@ import AppLayout from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
+import Watchlist from "./pages/Watchlist";
+import Search from "./pages/Search";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -24,7 +26,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
+              <Route path="/buscar" element={<Search />} />
               <Route path="/favoritos" element={<Favorites />} />
+              <Route path="/watchlist" element={<Watchlist />} />
               <Route path="/perfil" element={<Profile />} />
             </Route>
             <Route path="*" element={<NotFound />} />
