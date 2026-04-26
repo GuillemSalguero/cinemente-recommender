@@ -133,7 +133,7 @@ const Profile = () => {
 
         {/* Square tabs */}
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5">
             <TabsTrigger
               value="info"
               className="glass flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-border/50 p-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-lg sm:gap-3"
@@ -157,6 +157,15 @@ const Profile = () => {
               <Bookmark className="h-6 w-6" />
               <span className="text-xs font-medium sm:text-sm">
                 Watchlist ({watchlist.length})
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="glass flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-border/50 p-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-lg sm:gap-3"
+            >
+              <HistoryIcon className="h-6 w-6" />
+              <span className="text-xs font-medium sm:text-sm">
+                Historial ({lastMonth.length})
               </span>
             </TabsTrigger>
             <TabsTrigger
