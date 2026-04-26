@@ -12,6 +12,7 @@ import Watchlist from "./pages/Watchlist";
 import Search from "./pages/Search";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
+import Director from "./pages/Director";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/watchlist" element={<Watchlist />} />
               <Route path="/usuarios" element={<Users />} />
               <Route path="/perfil" element={<Profile />} />
+              <Route path="/director/:name" element={<Director />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
