@@ -59,7 +59,7 @@ const MovieGrid = ({ movies, isLoadingMore, showLoadMore, onLoadMore }: MovieGri
         </div>
       </section>
 
-      <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} showReason />
     </>
   );
 };
