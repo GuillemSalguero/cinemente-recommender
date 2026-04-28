@@ -303,6 +303,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 export default MovieModal;
 
 function ExternalReviewsSection({ title }: { title: string }) {
+  const { t } = useI18n();
   const reviews = useMemo(() => getExternalReviews(title, 12), [title]);
   const avg = useMemo(
     () => reviews.reduce((s, r) => s + r.rating, 0) / reviews.length,
@@ -313,7 +314,7 @@ function ExternalReviewsSection({ title }: { title: string }) {
     <div className="rounded-xl border border-border bg-card/30 p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Reseñas externas ({reviews.length})
+          {t("modal.extReviews")} ({reviews.length})
         </h3>
         <div className="flex items-center gap-1.5 text-sm">
           <Star className="h-4 w-4 fill-primary text-primary" />
