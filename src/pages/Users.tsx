@@ -6,6 +6,7 @@ import { getHistoryFor } from "@/hooks/useHistory";
 import type { Movie } from "@/types/movie";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
+import { useI18n } from "@/i18n/I18nContext";
 
 const favKey = (id: string) => `cinemente_favs_${id}`;
 const watchKey = (id: string) => `cinemente_watchlist_${id}`;
@@ -20,6 +21,7 @@ const readList = (key: string): Movie[] => {
 
 const Users = () => {
   const { user: me } = useAuth();
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [openUser, setOpenUser] = useState<User | null>(null);
   const [selected, setSelected] = useState<Movie | null>(null);
@@ -85,7 +87,7 @@ const Users = () => {
             className="mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Volver a usuarios
+            {t("users.back")}
           </button>
 
           <header className="glass mb-8 flex items-center gap-4 rounded-2xl p-6">
@@ -99,22 +101,22 @@ const Users = () => {
           </header>
 
           <Section
-            title="Favoritos"
+            title={t("users.section.fav")}
             icon={<Heart className="h-5 w-5 text-primary" />}
             movies={favs}
-            empty="Este usuario no tiene favoritos."
+            empty={t("users.empty.fav")}
           />
           <Section
-            title="Watchlist"
+            title={t("users.section.watch")}
             icon={<Bookmark className="h-5 w-5 text-primary" />}
             movies={watch}
-            empty="Watchlist vacía."
+            empty={t("users.empty.watch")}
           />
           <Section
-            title="Visto este mes"
+            title={t("users.section.recent")}
             icon={<HistoryIcon className="h-5 w-5 text-primary" />}
             movies={recent.map((h) => h.movie)}
-            empty="Sin actividad reciente."
+            empty={t("users.empty.recent")}
           />
         </div>
 
@@ -135,14 +137,14 @@ const Users = () => {
           <div className="mb-2 flex items-center gap-2">
             <UsersIcon className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Comunidad
+              {t("users.tag")}
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">
-            Buscar <span className="gradient-text">usuarios</span>
+            {t("users.titlePrefix")} <span className="gradient-text">{t("users.title")}</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Descubre los favoritos y la watchlist de otros cinéfilos.
+            {t("users.subtitle")}
           </p>
         </header>
 
@@ -153,7 +155,7 @@ const Users = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nombre o email..."
+              placeholder={t("users.searchPlaceholder")}
               className="w-full rounded-xl border border-border bg-background/50 py-3 pl-10 pr-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -162,8 +164,8 @@ const Users = () => {
         {results.length === 0 ? (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
             {allUsers.length === 0
-              ? "Aún no hay otros usuarios registrados."
-              : "Ningún usuario coincide con la búsqueda."}
+              ? t("users.noUsers")
+              : t("users.noMatch")}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

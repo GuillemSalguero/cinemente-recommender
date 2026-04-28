@@ -1,5 +1,6 @@
 import { Loader2, Plus } from "lucide-react";
 import { motion } from "framer-motion";
+import { useI18n } from "@/i18n/I18nContext";
 
 interface LoadMoreCardProps {
   onClick: () => void;
@@ -8,6 +9,7 @@ interface LoadMoreCardProps {
 }
 
 const LoadMoreCard = ({ onClick, isLoading, remainingCount = 3 }: LoadMoreCardProps) => {
+  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -27,7 +29,7 @@ const LoadMoreCard = ({ onClick, isLoading, remainingCount = 3 }: LoadMoreCardPr
               <Plus className="h-7 w-7 text-primary" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
-              Más {remainingCount} films
+              {t("common.moreFilms", { n: remainingCount })}
             </span>
           </>
         )}

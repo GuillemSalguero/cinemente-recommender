@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Loader2, Sparkles } from "lucide-react";
+import { useI18n } from "@/i18n/I18nContext";
 
 interface SearchHeroProps {
   onSearch: (query: string) => void;
@@ -8,6 +9,7 @@ interface SearchHeroProps {
 }
 
 const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,7 +34,7 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
       >
         <Sparkles className="h-5 w-5 text-primary" />
         <span className="text-sm font-medium tracking-widest uppercase text-muted-foreground">
-          Búsqueda inteligente
+          {t("hero.tag")}
         </span>
       </motion.div>
 
@@ -52,7 +54,7 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
         transition={{ delay: 0.4, duration: 0.5 }}
         className="mb-8 max-w-md text-center text-muted-foreground md:text-lg"
       >
-        Describe lo que quieres ver y la IA encontrará la película perfecta para ti.
+        {t("hero.subtitle")}
       </motion.p>
 
       <motion.form
@@ -72,7 +74,7 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
                 handleSubmit(e);
               }
             }}
-            placeholder="Quiero algo de suspenso con un giro inesperado..."
+            placeholder={t("hero.placeholder")}
             rows={3}
             className="w-full resize-none rounded-2xl bg-transparent px-5 py-5 text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
             disabled={isLoading}
@@ -87,12 +89,12 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Pensando...
+              {t("hero.thinking")}
             </>
           ) : (
             <>
               <Search className="h-4 w-4" />
-              Buscar Películas
+              {t("hero.searchBtn")}
             </>
           )}
         </button>

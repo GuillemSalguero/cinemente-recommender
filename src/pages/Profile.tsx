@@ -22,6 +22,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import type { Movie } from "@/types/movie";
+import { useI18n, localeFor } from "@/i18n/I18nContext";
 
 const Profile = () => {
   const { user, updateProfile, logout } = useAuth();
@@ -29,6 +30,7 @@ const Profile = () => {
   const { watchlist, removeFromWatchlist } = useWatchlist();
   const { lastMonth, clearHistory } = useHistory();
   const navigate = useNavigate();
+  const { t, lang } = useI18n();
   const [name, setName] = useState(user?.name || "");
   const [selected, setSelected] = useState<Movie | null>(null);
 
@@ -36,16 +38,16 @@ const Profile = () => {
     return (
       <div className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
         <UserIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h2 className="font-display text-2xl font-bold">Sin sesión activa</h2>
+        <h2 className="font-display text-2xl font-bold">{t("profile.noSession")}</h2>
         <p className="mt-2 max-w-md text-muted-foreground">
-          Inicia sesión para ver y editar tu perfil.
+          {t("profile.loginToEdit")}
         </p>
         <button
           onClick={() => navigate("/auth")}
           className="gradient-primary mt-6 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:opacity-90"
         >
           <LogIn className="h-4 w-4" />
-          Iniciar sesión
+          {t("auth.login")}
         </button>
       </div>
     );
@@ -54,11 +56,11 @@ const Profile = () => {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("El nombre no puede estar vacío");
+      toast.error(t("profile.nameEmpty"));
       return;
     }
     updateProfile({ name: name.trim() });
-    toast.success("Perfil actualizado");
+    toast.success(t("profile.updated"));
   };
 
   const renderRemovableGrid = (
@@ -109,11 +111,11 @@ const Profile = () => {
           <div className="mb-2 flex items-center gap-2">
             <UserIcon className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Tu cuenta
+              {t("profile.tag")}
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">
-            Mi <span className="gradient-text">perfil</span>
+            {t("profile.titlePrefix")} <span className="gradient-text">{t("profile.title")}</span>
           </h1>
         </header>
 
@@ -126,7 +128,7 @@ const Profile = () => {
             <p className="truncate font-display text-lg font-semibold">{user.name}</p>
             <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Iniciaste con {user.provider === "google" ? "Google" : "email"}
+              {t("profile.signedInWith")} {user.provider === "google" ? "Google" : "email"}
             </p>
           </div>
         </div>
@@ -139,7 +141,7 @@ const Profile = () => {
               className="glass flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-border/50 p-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-lg sm:gap-3"
             >
               <UserIcon className="h-6 w-6" />
-              <span className="text-xs font-medium sm:text-sm">Información</span>
+              <span className="text-xs font-medium sm:text-sm">{t("profile.tab.info")}</span>
             </TabsTrigger>
             <TabsTrigger
               value="favorites"
@@ -147,7 +149,7 @@ const Profile = () => {
             >
               <Heart className="h-6 w-6" />
               <span className="text-xs font-medium sm:text-sm">
-                Favoritos ({favorites.length})
+                {t("nav.favorites")} ({favorites.length})
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -156,7 +158,7 @@ const Profile = () => {
             >
               <Bookmark className="h-6 w-6" />
               <span className="text-xs font-medium sm:text-sm">
-                Watchlist ({watchlist.length})
+                {t("nav.watchlist")} ({watchlist.length})
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -165,7 +167,7 @@ const Profile = () => {
             >
               <HistoryIcon className="h-6 w-6" />
               <span className="text-xs font-medium sm:text-sm">
-                Historial ({lastMonth.length})
+                {t("profile.tab.history")} ({lastMonth.length})
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -173,18 +175,18 @@ const Profile = () => {
               className="glass flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-border/50 p-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-lg sm:gap-3"
             >
               <SearchIcon className="h-6 w-6" />
-              <span className="text-xs font-medium sm:text-sm">Buscar</span>
+              <span className="text-xs font-medium sm:text-sm">{t("profile.tab.search")}</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Info */}
           <TabsContent value="info" className="mt-6">
             <form onSubmit={handleSave} className="glass rounded-2xl p-6">
-              <h2 className="mb-4 font-display text-lg font-semibold">Editar información</h2>
+              <h2 className="mb-4 font-display text-lg font-semibold">{t("profile.editInfo")}</h2>
               <div className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Nombre
+                    {t("profile.name")}
                   </label>
                   <div className="relative">
                     <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -199,7 +201,7 @@ const Profile = () => {
 
                 <div>
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Email
+                    {t("profile.email")}
                   </label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -219,7 +221,7 @@ const Profile = () => {
                   className="gradient-primary flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:opacity-90"
                 >
                   <Save className="h-4 w-4" />
-                  Guardar cambios
+                  {t("profile.saveChanges")}
                 </button>
                 <button
                   type="button"
@@ -230,7 +232,7 @@ const Profile = () => {
                   className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/50 px-5 py-3 text-sm font-medium text-foreground hover:bg-secondary"
                 >
                   <LogOut className="h-4 w-4" />
-                  Cerrar sesión
+                  {t("auth.logout")}
                 </button>
               </div>
             </form>
@@ -241,7 +243,7 @@ const Profile = () => {
             {renderRemovableGrid(
               favorites,
               removeFavorite,
-              "Aún no tienes favoritos. Busca películas y dale al corazón ❤️",
+              t("fav.empty"),
               <Heart className="h-10 w-10" />
             )}
           </TabsContent>
@@ -251,7 +253,7 @@ const Profile = () => {
             {renderRemovableGrid(
               watchlist,
               removeFromWatchlist,
-              "Tu watchlist está vacía. Guarda películas con el icono 🔖",
+              t("watch.empty"),
               <Bookmark className="h-10 w-10" />
             )}
           </TabsContent>
@@ -260,18 +262,18 @@ const Profile = () => {
           <TabsContent value="history" className="mt-6">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Películas que has consultado en los últimos 30 días.
+                {t("profile.history.subtitle")}
               </p>
               {lastMonth.length > 0 && (
                 <button
                   onClick={() => {
                     clearHistory();
-                    toast.success("Historial borrado");
+                    toast.success(t("profile.history.cleared"));
                   }}
                   className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-1.5 text-xs font-medium hover:bg-secondary"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Limpiar
+                  {t("common.clear")}
                 </button>
               )}
             </div>
@@ -279,7 +281,7 @@ const Profile = () => {
               <div className="glass rounded-2xl p-12 text-center">
                 <HistoryIcon className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  Sin actividad reciente. Abre alguna película para empezar a llenarlo.
+                  {t("profile.history.empty")}
                 </p>
               </div>
             ) : (
@@ -292,7 +294,7 @@ const Profile = () => {
                       onClick={() => setSelected(entry.movie)}
                     />
                     <div className="absolute bottom-16 right-2 rounded-md bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur-sm">
-                      {new Date(entry.viewedAt).toLocaleDateString("es-ES", {
+                      {new Date(entry.viewedAt).toLocaleDateString(localeFor(lang), {
                         day: "numeric",
                         month: "short",
                       })}
@@ -306,23 +308,22 @@ const Profile = () => {
           <TabsContent value="search" className="mt-6">
             <div className="glass rounded-2xl p-8 text-center">
               <SearchIcon className="mx-auto mb-3 h-10 w-10 text-primary" />
-              <h3 className="font-display text-xl font-semibold">Encuentra tu próxima peli</h3>
+              <h3 className="font-display text-xl font-semibold">{t("profile.search.title")}</h3>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                Usa la búsqueda con IA para descubrir recomendaciones personalizadas o filtra el
-                catálogo de forma clásica.
+                {t("profile.search.subtitle")}
               </p>
               <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
                 <button
                   onClick={() => navigate("/")}
                   className="gradient-primary flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:opacity-90"
                 >
-                  Buscar con IA
+                  {t("profile.search.aiBtn")}
                 </button>
                 <button
                   onClick={() => navigate("/buscar")}
                   className="flex items-center gap-2 rounded-xl border border-border bg-secondary/50 px-5 py-3 text-sm font-medium hover:bg-secondary"
                 >
-                  Búsqueda clásica
+                  {t("profile.search.classicBtn")}
                 </button>
               </div>
             </div>

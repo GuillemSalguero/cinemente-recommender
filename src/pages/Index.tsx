@@ -3,10 +3,12 @@ import { motion } from "framer-motion";
 import SearchHero from "@/components/movie/SearchHero";
 import MovieGrid from "@/components/movie/MovieGrid";
 import { useMovieSearch } from "@/hooks/useMovieSearch";
+import { useI18n } from "@/i18n/I18nContext";
 
 const Index = () => {
   const { movies, isLoading, isLoadingMore, hasSearched, search, loadMore, showLoadMore } =
     useMovieSearch();
+  const { t } = useI18n();
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,7 +30,7 @@ const Index = () => {
             className="flex min-h-screen flex-col items-center justify-center gap-4"
           >
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-lg text-muted-foreground font-display">Pensando...</p>
+            <p className="text-lg text-muted-foreground font-display">{t("hero.thinking")}</p>
           </motion.div>
         )}
 
@@ -40,10 +42,10 @@ const Index = () => {
                   onClick={() => window.location.reload()}
                   className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  ← Nueva búsqueda
+                  {t("hero.newSearch")}
                 </button>
                 <span className="text-sm font-medium text-muted-foreground">
-                  {movies.length} recomendaciones
+                  {movies.length} {t("hero.recommendations")}
                 </span>
               </div>
             </div>

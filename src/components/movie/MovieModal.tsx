@@ -8,6 +8,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { useReviews } from "@/hooks/useReviews";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getExternalReviews } from "@/data/externalReviews";
@@ -23,6 +24,7 @@ interface MovieModalProps {
 const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { addToHistory } = useHistory();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { inWatchlist, toggleWatchlist } = useWatchlist();
@@ -51,22 +53,22 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
   const saved = inWatchlist(movie.title);
 
   const handleFav = () => {
-    if (!user) return toast.error("Inicia sesión para guardar favoritos");
+    if (!user) return toast.error(t("modal.loginFav"));
     const added = toggleFavorite(movie);
-    toast.success(added ? "Añadida a favoritos ❤️" : "Eliminada de favoritos");
+    toast.success(added ? t("modal.addedFav") : t("modal.removedFav"));
   };
 
   const handleWatch = () => {
-    if (!user) return toast.error("Inicia sesión para guardar en watchlist");
+    if (!user) return toast.error(t("modal.loginWatch"));
     const added = toggleWatchlist(movie);
-    toast.success(added ? "Añadida a watchlist 🔖" : "Eliminada de watchlist");
+    toast.success(added ? t("modal.addedWatch") : t("modal.removedWatch"));
   };
 
   const handleSaveReview = () => {
-    if (!user) return toast.error("Inicia sesión para puntuar y reseñar");
-    if (rating === 0) return toast.error("Selecciona al menos 1 estrella");
+    if (!user) return toast.error(t("modal.loginToReview"));
+    if (rating === 0) return toast.error(t("modal.selectStars"));
     saveReview(movie.title, rating, reviewText.trim());
-    toast.success("Reseña guardada");
+    toast.success(t("modal.reviewSaved"));
   };
 
   const handleClearReview = () => {
@@ -74,7 +76,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
     removeReview(movie.title);
     setRating(0);
     setReviewText("");
-    toast.success("Reseña eliminada");
+    toast.success(t("modal.reviewDeleted"));
   };
 
   const handleDirectorClick = (name: string) => {
@@ -103,7 +105,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
           <button
             onClick={onClose}
             className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm transition-colors hover:bg-background/90"
-            aria-label="Cerrar"
+            aria-label={t("modal.close")}
           >
             <X className="h-5 w-5 text-foreground" />
           </button>
@@ -159,7 +161,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                 )}
               >
                 <Heart className={cn("h-4 w-4", fav && "fill-current")} />
-                {fav ? "En favoritos" : "Favorito"}
+                {fav ? t("modal.inFav") : t("modal.fav")}
               </button>
               <button
                 onClick={handleWatch}
@@ -171,7 +173,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                 )}
               >
                 <Bookmark className={cn("h-4 w-4", saved && "fill-current")} />
-                {saved ? "En watchlist" : "Watchlist"}
+                {saved ? t("modal.inWatch") : t("nav.watchlist")}
               </button>
 
               {movie.tomatometer > 0 && (
@@ -200,7 +202,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             {/* Synopsis */}
             <div>
               <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Sinopsis
+                {t("modal.synopsis")}
               </h3>
               <p className="leading-relaxed text-foreground/90">{movie.description}</p>
             </div>
@@ -211,7 +213,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                 <div className="mb-2 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">
-                    Razón de la IA
+                    {t("modal.aiReason")}
                   </h3>
                 </div>
                 <p className="text-sm leading-relaxed text-foreground/80">{movie.reason}</p>
@@ -221,12 +223,12 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             {/* Review section */}
             <div className="rounded-xl border border-border bg-card/50 p-5">
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Tu valoración
+                {t("modal.yourRating")}
               </h3>
 
               {!user ? (
                 <p className="text-sm text-muted-foreground">
-                  Inicia sesión para puntuar y dejar una reseña.
+                  {t("modal.loginToReview")}
                 </p>
               ) : (
                 <>
@@ -264,7 +266,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                   <textarea
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Escribe tu reseña (opcional)..."
+                    placeholder={t("modal.reviewPlaceholder")}
                     rows={4}
                     className="w-full resize-none rounded-xl border border-border bg-background/50 p-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
@@ -274,14 +276,14 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                       onClick={handleSaveReview}
                       className="gradient-primary rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
                     >
-                      Guardar reseña
+                      {t("modal.saveReview")}
                     </button>
                     {getReview(movie.title) && (
                       <button
                         onClick={handleClearReview}
                         className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm font-medium hover:bg-secondary"
                       >
-                        Eliminar
+                        {t("common.delete")}
                       </button>
                     )}
                   </div>
@@ -301,6 +303,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 export default MovieModal;
 
 function ExternalReviewsSection({ title }: { title: string }) {
+  const { t } = useI18n();
   const reviews = useMemo(() => getExternalReviews(title, 12), [title]);
   const avg = useMemo(
     () => reviews.reduce((s, r) => s + r.rating, 0) / reviews.length,
@@ -311,7 +314,7 @@ function ExternalReviewsSection({ title }: { title: string }) {
     <div className="rounded-xl border border-border bg-card/30 p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Reseñas externas ({reviews.length})
+          {t("modal.extReviews")} ({reviews.length})
         </h3>
         <div className="flex items-center gap-1.5 text-sm">
           <Star className="h-4 w-4 fill-primary text-primary" />
