@@ -10,6 +10,8 @@ import { useReviews } from "@/hooks/useReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getExternalReviews } from "@/data/externalReviews";
+import { useMemo } from "react";
 
 interface MovieModalProps {
   movie: Movie | null;
@@ -286,6 +288,9 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                 </>
               )}
             </div>
+
+            {/* External reviews */}
+            <ExternalReviewsSection title={movie.title} />
           </div>
         </motion.div>
       </motion.div>
@@ -294,3 +299,70 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 };
 
 export default MovieModal;
+
+function ExternalReviewsSection({ title }: { title: string }) {
+  const reviews = useMemo(() => getExternalReviews(title, 12), [title]);
+  const avg = useMemo(
+    () => reviews.reduce((s, r) => s + r.rating, 0) / reviews.length,
+    [reviews]
+  );
+
+  return (
+    <div className="rounded-xl border border-border bg-card/30 p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Reseñas externas ({reviews.length})
+        </h3>
+        <div className="flex items-center gap-1.5 text-sm">
+          <Star className="h-4 w-4 fill-primary text-primary" />
+          <span className="font-semibold">{avg.toFixed(1)}</span>
+          <span className="text-muted-foreground">/ 5</span>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {reviews.map((r, i) => (
+          <div
+            key={`${r.author}-${i}`}
+            className="rounded-lg border border-border/60 bg-background/40 p-4"
+          >
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-xs font-bold text-primary-foreground">
+                  {r.author
+                    .split(" ")
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join("")}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{r.author}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {r.source} · {r.date}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      r.rating >= n
+                        ? "fill-primary text-primary"
+                        : "text-muted-foreground/30"
+                    )}
+                  />
+                ))}
+                <span className="ml-1 text-xs text-muted-foreground">
+                  {r.rating.toFixed(1)}
+                </span>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground/80">{r.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
