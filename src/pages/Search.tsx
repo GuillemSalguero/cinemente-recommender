@@ -5,12 +5,14 @@ import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import type { Movie } from "@/types/movie";
 import { CATALOG } from "@/data/catalog";
+import { useI18n } from "@/i18n/I18nContext";
 
 const ALL_GENRES = Array.from(
   new Set(CATALOG.flatMap((m) => m.genre.split(",").map((g) => g.trim())))
 ).sort();
 
 const Search = () => {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState<string>("all");
   const [selected, setSelected] = useState<Movie | null>(null);
@@ -39,14 +41,14 @@ const Search = () => {
           <div className="mb-2 flex items-center gap-2">
             <SearchIcon className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Catálogo
+              {t("search.tag")}
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">
-            Búsqueda <span className="gradient-text">clásica</span>
+            {t("search.titlePrefix")} <span className="gradient-text">{t("search.title")}</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Filtra por título, director o género — sin IA.
+            {t("search.subtitle")}
           </p>
         </header>
 
@@ -57,7 +59,7 @@ const Search = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Título, director o palabra clave..."
+              placeholder={t("search.placeholder")}
               className="w-full rounded-xl border border-border bg-background/50 py-3 pl-10 pr-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -68,7 +70,7 @@ const Search = () => {
               onChange={(e) => setGenre(e.target.value)}
               className="w-full appearance-none rounded-xl border border-border bg-background/50 py-3 pl-10 pr-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="all">Todos los géneros</option>
+              <option value="all">{t("search.allGenres")}</option>
               {ALL_GENRES.map((g) => (
                 <option key={g} value={g}>
                   {g}
@@ -79,12 +81,12 @@ const Search = () => {
         </div>
 
         <p className="mb-4 text-xs text-muted-foreground">
-          {results.length} {results.length === 1 ? "resultado" : "resultados"}
+          {results.length} {results.length === 1 ? t("common.result") : t("common.results")}
         </p>
 
         {results.length === 0 ? (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
-            No hay coincidencias. Prueba con otra palabra o género.
+            {t("search.noMatch")}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">

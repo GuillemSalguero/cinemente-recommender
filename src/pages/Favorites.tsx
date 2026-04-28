@@ -7,27 +7,29 @@ import { useFavorites } from "@/hooks/useFavorites";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import type { Movie } from "@/types/movie";
+import { useI18n } from "@/i18n/I18nContext";
 
 const Favorites = () => {
   const { user } = useAuth();
   const { favorites, removeFavorite } = useFavorites();
   const [selected, setSelected] = useState<Movie | null>(null);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   if (!user) {
     return (
       <div className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
         <Heart className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h2 className="font-display text-2xl font-bold">Tus favoritos te esperan</h2>
+        <h2 className="font-display text-2xl font-bold">{t("fav.waiting")}</h2>
         <p className="mt-2 max-w-md text-muted-foreground">
-          Inicia sesión para guardar las películas que más te gusten y volverlas a ver cuando quieras.
+          {t("fav.loginPrompt")}
         </p>
         <button
           onClick={() => navigate("/auth")}
           className="gradient-primary mt-6 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:opacity-90"
         >
           <LogIn className="h-4 w-4" />
-          Iniciar sesión
+          {t("auth.login")}
         </button>
       </div>
     );
@@ -44,14 +46,14 @@ const Favorites = () => {
           <div className="mb-2 flex items-center gap-2">
             <Heart className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Tu colección
+              {t("fav.tag")}
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">
-            Películas <span className="gradient-text">favoritas</span>
+            {t("fav.titlePrefix")} <span className="gradient-text">{t("fav.title")}</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {favorites.length} {favorites.length === 1 ? "película guardada" : "películas guardadas"}
+            {favorites.length} {favorites.length === 1 ? t("fav.count.one") : t("fav.count.many")}
           </p>
         </header>
 
@@ -59,13 +61,13 @@ const Favorites = () => {
           <div className="glass rounded-2xl p-12 text-center">
             <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <p className="text-muted-foreground">
-              Aún no tienes favoritos. Busca películas y dale al corazón ❤️
+              {t("fav.empty")}
             </p>
             <button
               onClick={() => navigate("/")}
               className="mt-5 rounded-xl border border-border bg-secondary/50 px-5 py-2.5 text-sm font-medium hover:bg-secondary"
             >
-              Ir a buscar
+              {t("fav.goSearch")}
             </button>
           </div>
         ) : (
