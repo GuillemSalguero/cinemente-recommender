@@ -5,6 +5,7 @@ import { Loader2, Mail, Lock, User as UserIcon, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/I18nContext";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4">
@@ -15,6 +16,7 @@ const GoogleIcon = () => (
 const Auth = () => {
   const { user, login, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [tab, setTab] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +36,7 @@ const Auth = () => {
     setLoading(true);
     try {
       await login(loginEmail, loginPassword);
-      toast.success("¡Bienvenido de vuelta!");
+      toast.success(t("auth.welcome"));
       navigate("/");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al iniciar sesión");
@@ -46,13 +48,13 @@ const Auth = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (regPassword.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres");
+      toast.error(t("auth.shortPassword"));
       return;
     }
     setLoading(true);
     try {
       await register(regName, regEmail, regPassword);
-      toast.success("¡Cuenta creada con éxito!");
+      toast.success(t("auth.created"));
       navigate("/");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al registrarse");
@@ -65,10 +67,10 @@ const Auth = () => {
     setLoading(true);
     try {
       await loginWithGoogle();
-      toast.success("¡Sesión iniciada con Google!");
+      toast.success(t("auth.googleOk"));
       navigate("/");
     } catch {
-      toast.error("Error con Google");
+      toast.error(t("auth.googleErr"));
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ const Auth = () => {
             <div className="mb-3 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Tu cinemateca personal
+                {t("auth.tag")}
               </span>
             </div>
             <h1 className="font-display text-4xl font-bold tracking-tight">
@@ -100,22 +102,22 @@ const Auth = () => {
               <span className="text-foreground">Mente</span>
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Inicia sesión para guardar tus películas favoritas
+              {t("auth.subtitle")}
             </p>
           </div>
 
           <div className="glass rounded-2xl p-6">
             <Tabs value={tab} onValueChange={(v) => setTab(v as "login" | "register")}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Iniciar sesión</TabsTrigger>
-                <TabsTrigger value="register">Registrarse</TabsTrigger>
+                <TabsTrigger value="login">{t("auth.tab.login")}</TabsTrigger>
+                <TabsTrigger value="register">{t("auth.tab.register")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="mt-6">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <FieldEmail value={loginEmail} onChange={setLoginEmail} />
-                  <FieldPassword value={loginPassword} onChange={setLoginPassword} />
-                  <SubmitBtn loading={loading} label="Entrar" />
+                  <FieldPassword value={loginPassword} onChange={setLoginPassword} placeholder={t("auth.passwordPlaceholder")} />
+                  <SubmitBtn loading={loading} label={t("auth.enter")} />
                 </form>
               </TabsContent>
 
