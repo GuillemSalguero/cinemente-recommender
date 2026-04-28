@@ -10,6 +10,8 @@ import { useReviews } from "@/hooks/useReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getExternalReviews } from "@/data/externalReviews";
+import { useMemo } from "react";
 
 interface MovieModalProps {
   movie: Movie | null;
