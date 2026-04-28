@@ -4,6 +4,7 @@ import type { Movie } from "@/types/movie";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -17,27 +18,28 @@ const MovieCard = ({ movie, index, onClick }: MovieCardProps) => {
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { inWatchlist, toggleWatchlist } = useWatchlist();
+  const { t } = useI18n();
   const fav = isFavorite(movie.title);
   const saved = inWatchlist(movie.title);
 
   const handleFav = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      toast.error("Inicia sesión para guardar favoritos");
+      toast.error(t("modal.loginFav"));
       return;
     }
     const added = toggleFavorite(movie);
-    toast.success(added ? "Añadida a favoritos ❤️" : "Eliminada de favoritos");
+    toast.success(added ? t("modal.addedFav") : t("modal.removedFav"));
   };
 
   const handleWatch = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      toast.error("Inicia sesión para guardar en watchlist");
+      toast.error(t("modal.loginWatch"));
       return;
     }
     const added = toggleWatchlist(movie);
-    toast.success(added ? "Añadida a watchlist 🔖" : "Eliminada de watchlist");
+    toast.success(added ? t("modal.addedWatch") : t("modal.removedWatch"));
   };
 
   return (
