@@ -6,12 +6,14 @@ import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import { moviesByDirector } from "@/data/catalog";
 import type { Movie } from "@/types/movie";
+import { useI18n } from "@/i18n/I18nContext";
 
 const Director = () => {
   const { name = "" } = useParams();
   const navigate = useNavigate();
   const directorName = decodeURIComponent(name);
   const [selected, setSelected] = useState<Movie | null>(null);
+  const { t } = useI18n();
 
   const movies = useMemo(() => moviesByDirector(directorName), [directorName]);
 
@@ -27,27 +29,27 @@ const Director = () => {
           className="mb-6 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Volver
+          {t("common.back")}
         </button>
 
         <header className="mb-8">
           <div className="mb-2 flex items-center gap-2">
             <Film className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Filmografía
+              {t("director.tag")}
             </span>
           </div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">
             <span className="gradient-text">{directorName}</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {movies.length} {movies.length === 1 ? "película" : "películas"} en el catálogo
+            {movies.length} {movies.length === 1 ? t("director.count.one") : t("director.count.many")}
           </p>
         </header>
 
         {movies.length === 0 ? (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
-            No hay películas de este director en el catálogo todavía.
+            {t("director.empty")}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
