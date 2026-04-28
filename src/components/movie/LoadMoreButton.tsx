@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/i18n/I18nContext";
 
 interface LoadMoreButtonProps {
   onClick: () => void;
@@ -6,6 +7,7 @@ interface LoadMoreButtonProps {
 }
 
 const LoadMoreButton = ({ onClick, isLoading }: LoadMoreButtonProps) => {
+  const { t } = useI18n();
   return (
     <div className="flex justify-center py-8">
       <button
@@ -16,10 +18,10 @@ const LoadMoreButton = ({ onClick, isLoading }: LoadMoreButtonProps) => {
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Cargando...
+            {t("common.loading")}
           </>
         ) : (
-          "Mostrar más recomendaciones"
+          t("common.loadMore")
         )}
       </button>
     </div>
