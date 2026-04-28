@@ -123,10 +123,10 @@ const Auth = () => {
 
               <TabsContent value="register" className="mt-6">
                 <form onSubmit={handleRegister} className="space-y-4">
-                  <FieldName value={regName} onChange={setRegName} />
+                  <FieldName value={regName} onChange={setRegName} placeholder={t("auth.namePlaceholder")} />
                   <FieldEmail value={regEmail} onChange={setRegEmail} />
-                  <FieldPassword value={regPassword} onChange={setRegPassword} />
-                  <SubmitBtn loading={loading} label="Crear cuenta" />
+                  <FieldPassword value={regPassword} onChange={setRegPassword} placeholder={t("auth.passwordPlaceholder")} />
+                  <SubmitBtn loading={loading} label={t("auth.create")} />
                 </form>
               </TabsContent>
             </Tabs>
@@ -143,7 +143,7 @@ const Auth = () => {
               className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
             >
               <GoogleIcon />
-              Continuar con Google
+              {t("auth.googleBtn")}
             </button>
           </div>
 
@@ -151,7 +151,7 @@ const Auth = () => {
             onClick={() => navigate("/")}
             className="mt-6 block w-full text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            ← Continuar sin cuenta
+            {t("auth.guest")}
           </button>
         </motion.div>
       </div>
@@ -176,7 +176,7 @@ const FieldEmail = ({ value, onChange }: { value: string; onChange: (v: string) 
   </div>
 );
 
-const FieldPassword = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+const FieldPassword = ({ value, onChange, placeholder = "Password" }: { value: string; onChange: (v: string) => void; placeholder?: string }) => (
   <div className="relative">
     <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
     <input
@@ -184,13 +184,13 @@ const FieldPassword = ({ value, onChange }: { value: string; onChange: (v: strin
       required
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="Contraseña"
+      placeholder={placeholder}
       className={inputClass}
     />
   </div>
 );
 
-const FieldName = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+const FieldName = ({ value, onChange, placeholder = "Name" }: { value: string; onChange: (v: string) => void; placeholder?: string }) => (
   <div className="relative">
     <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
     <input
@@ -198,7 +198,7 @@ const FieldName = ({ value, onChange }: { value: string; onChange: (v: string) =
       required
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="Tu nombre"
+      placeholder={placeholder}
       className={inputClass}
     />
   </div>
