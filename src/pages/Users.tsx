@@ -35,7 +35,7 @@ const Users = () => {
     const q = query.trim().toLowerCase();
     if (!q) return allUsers;
     return allUsers.filter(
-      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      (u) => u.name.toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q)
     );
   }, [query, allUsers]);
 
