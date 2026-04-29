@@ -249,6 +249,7 @@ export const dict = {
   "modal.addedWatch": { es: "Añadida a watchlist 🔖", ca: "Afegida a la llista 🔖", de: "Zur Merkliste hinzugefügt 🔖", fr: "Ajouté à la liste 🔖" },
   "modal.removedWatch": { es: "Eliminada de watchlist", ca: "Eliminada de la llista", de: "Aus Merkliste entfernt", fr: "Retiré de la liste" },
   "modal.close": { es: "Cerrar", ca: "Tanca", de: "Schließen", fr: "Fermer" },
+  "modal.availableOn": { es: "Disponible en", ca: "Disponible a", de: "Verfügbar auf", fr: "Disponible sur" },
 } as const;
 
 export type DictKey = keyof typeof dict;
