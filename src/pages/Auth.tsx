@@ -1,32 +1,25 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, Mail, Lock, User as UserIcon, Sparkles } from "lucide-react";
+import { Loader2, Lock, User as UserIcon, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/I18nContext";
 
-const GoogleIcon = () => (
-  <svg viewBox="0 0 24 24" className="h-4 w-4">
-    <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.5 12 2.5 6.8 2.5 2.5 6.8 2.5 12s4.3 9.5 9.5 9.5c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.5H12z"/>
-  </svg>
-);
-
 const Auth = () => {
-  const { user, login, register, loginWithGoogle } = useAuth();
+  const { user, login, register } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
   const [tab, setTab] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
 
   // Login fields
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginName, setLoginName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
   // Register fields
   const [regName, setRegName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
 
   if (user) return <Navigate to="/" replace />;
@@ -35,7 +28,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(loginEmail, loginPassword);
+      await login(loginName, loginPassword);
       toast.success(t("auth.welcome"));
       navigate("/");
     } catch (err) {
@@ -53,24 +46,11 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      await register(regName, regEmail, regPassword);
+      await register(regName, regPassword);
       toast.success(t("auth.created"));
       navigate("/");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al registrarse");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogle = async () => {
-    setLoading(true);
-    try {
-      await loginWithGoogle();
-      toast.success(t("auth.googleOk"));
-      navigate("/");
-    } catch {
-      toast.error(t("auth.googleErr"));
     } finally {
       setLoading(false);
     }
@@ -115,7 +95,7 @@ const Auth = () => {
 
               <TabsContent value="login" className="mt-6">
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <FieldEmail value={loginEmail} onChange={setLoginEmail} />
+                  <FieldName value={loginName} onChange={setLoginName} placeholder={t("auth.namePlaceholder")} />
                   <FieldPassword value={loginPassword} onChange={setLoginPassword} placeholder={t("auth.passwordPlaceholder")} />
                   <SubmitBtn loading={loading} label={t("auth.enter")} />
                 </form>
@@ -124,27 +104,11 @@ const Auth = () => {
               <TabsContent value="register" className="mt-6">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <FieldName value={regName} onChange={setRegName} placeholder={t("auth.namePlaceholder")} />
-                  <FieldEmail value={regEmail} onChange={setRegEmail} />
                   <FieldPassword value={regPassword} onChange={setRegPassword} placeholder={t("auth.passwordPlaceholder")} />
                   <SubmitBtn loading={loading} label={t("auth.create")} />
                 </form>
               </TabsContent>
             </Tabs>
-
-            <div className="my-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">o</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            <button
-              onClick={handleGoogle}
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
-            >
-              <GoogleIcon />
-              {t("auth.googleBtn")}
-            </button>
           </div>
 
           <button
@@ -161,20 +125,6 @@ const Auth = () => {
 
 const inputClass =
   "w-full rounded-xl border border-border bg-background/50 py-3 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20";
-
-const FieldEmail = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-  <div className="relative">
-    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-    <input
-      type="email"
-      required
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="tu@email.com"
-      className={inputClass}
-    />
-  </div>
-);
 
 const FieldPassword = ({ value, onChange, placeholder = "Password" }: { value: string; onChange: (v: string) => void; placeholder?: string }) => (
   <div className="relative">

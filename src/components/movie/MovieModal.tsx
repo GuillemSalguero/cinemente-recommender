@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Clock, Film, Sparkles, Heart, Bookmark, Star } from "lucide-react";
+import { X, Clock, Film, Sparkles, Heart, Bookmark, Star, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Movie, StreamingPlatform } from "@/types/movie";
 import { useHistory } from "@/hooks/useHistory";
@@ -12,7 +12,7 @@ import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getExternalReviews } from "@/data/externalReviews";
-import { useMemo } from "react";
+import { moviesService, mergeDetail } from "@/lib/backend";
 
 interface MovieModalProps {
   movie: Movie | null;
@@ -24,7 +24,7 @@ interface MovieModalProps {
 const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { addToHistory } = useHistory();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { inWatchlist, toggleWatchlist } = useWatchlist();
@@ -34,46 +34,74 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
 
+  // Detalle cargado del back al abrir el modal. Se mergea sobre la base.
+  const [detailed, setDetailed] = useState<Movie | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
   useEffect(() => {
     if (movie) addToHistory(movie);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movie?.title]);
 
   useEffect(() => {
-    if (!movie) return;
+    if (!movie) {
+      setDetailed(null);
+      return;
+    }
     const r = getReview(movie.title);
     setRating(r?.rating ?? 0);
     setReviewText(r?.text ?? "");
     setHoverRating(0);
-  }, [movie, getReview]);
+
+    // Reset detalle y pedir uno nuevo cuando cambia la película.
+    setDetailed(null);
+    const slug = movie.link || movie.title;
+    if (!slug) return;
+    let cancelled = false;
+    setLoadingDetail(true);
+    moviesService
+      .getBySlug(slug, lang)
+      .then((d) => {
+        if (cancelled) return;
+        setDetailed(mergeDetail(movie, d));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDetail(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [movie, getReview, lang]);
 
   if (!movie) return null;
 
-  const fav = isFavorite(movie.title);
-  const saved = inWatchlist(movie.title);
+  // A partir de aquí trabajamos siempre con la versión enriquecida (si llegó).
+  const view: Movie = detailed ?? movie;
+  const fav = isFavorite(view.title);
+  const saved = inWatchlist(view.title);
 
   const handleFav = () => {
     if (!user) return toast.error(t("modal.loginFav"));
-    const added = toggleFavorite(movie);
+    const added = toggleFavorite(view);
     toast.success(added ? t("modal.addedFav") : t("modal.removedFav"));
   };
 
   const handleWatch = () => {
     if (!user) return toast.error(t("modal.loginWatch"));
-    const added = toggleWatchlist(movie);
+    const added = toggleWatchlist(view);
     toast.success(added ? t("modal.addedWatch") : t("modal.removedWatch"));
   };
 
   const handleSaveReview = () => {
     if (!user) return toast.error(t("modal.loginToReview"));
     if (rating === 0) return toast.error(t("modal.selectStars"));
-    saveReview(movie.title, rating, reviewText.trim());
+    saveReview(view.title, rating, reviewText.trim());
     toast.success(t("modal.reviewSaved"));
   };
 
   const handleClearReview = () => {
     if (!user) return;
-    removeReview(movie.title);
+    removeReview(view.title);
     setRating(0);
     setReviewText("");
     toast.success(t("modal.reviewDeleted"));
@@ -112,10 +140,10 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 
           {/* Hero */}
           <div className="relative h-72 md:h-96 overflow-hidden rounded-t-2xl">
-            {movie.poster_url ? (
+            {view.poster_url ? (
               <img
-                src={movie.poster_url}
-                alt={movie.title}
+                src={view.poster_url}
+                alt={view.title}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -123,23 +151,34 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-cinema-glass via-cinema-glass/40 to-transparent" />
 
+            {loadingDetail && (
+              <div className="absolute right-4 top-4 z-10 flex h-9 items-center gap-2 rounded-full bg-background/70 px-3 backdrop-blur-sm">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span className="text-xs text-muted-foreground">{t("hero.thinking")}</span>
+              </div>
+            )}
+
             <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
               <h2 className="font-display text-3xl font-bold text-foreground md:text-5xl">
-                {movie.title}
+                {view.title}
               </h2>
               <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground md:text-base">
-                <span>{movie.year}</span>
-                <span className="h-1 w-1 rounded-full bg-muted-foreground/40" />
-                <span className="flex items-center gap-1">
-                  <Film className="h-4 w-4" />
-                  {movie.genre}
-                </span>
-                {movie.runtime > 0 && (
+                {view.year && <span>{view.year}</span>}
+                {view.genre && (
+                  <>
+                    <span className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+                    <span className="flex items-center gap-1">
+                      <Film className="h-4 w-4" />
+                      {view.genre}
+                    </span>
+                  </>
+                )}
+                {view.runtime > 0 && (
                   <>
                     <span className="h-1 w-1 rounded-full bg-muted-foreground/40" />
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {movie.runtime} min
+                      {view.runtime} min
                     </span>
                   </>
                 )}
@@ -176,39 +215,44 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                 {saved ? t("modal.inWatch") : t("nav.watchlist")}
               </button>
 
-              {movie.tomatometer > 0 && (
+              {view.tomatometer > 0 && (
                 <span className="ml-auto flex items-center gap-1.5 rounded-lg bg-cinema-tomato/10 px-3 py-1.5 text-sm font-medium text-cinema-tomato">
-                  🍅 {movie.tomatometer}%
+                  🍅 {view.tomatometer}%
                 </span>
               )}
             </div>
 
             {/* Director chips (clickable) */}
-            <div className="flex flex-wrap gap-2">
-              {movie.director.split(",").map((d) => {
-                const name = d.trim();
-                return (
-                  <button
-                    key={name}
-                    onClick={() => handleDirectorClick(name)}
-                    className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-                  >
-                    Dir. {name}
-                  </button>
-                );
-              })}
-            </div>
+            {view.director && (
+              <div className="flex flex-wrap gap-2">
+                {view.director.split(",").map((d) => {
+                  const name = d.trim();
+                  if (!name) return null;
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => handleDirectorClick(name)}
+                      className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                    >
+                      Dir. {name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Synopsis */}
-            <div>
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("modal.synopsis")}
-              </h3>
-              <p className="leading-relaxed text-foreground/90">{movie.description}</p>
-            </div>
+            {view.description && (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("modal.synopsis")}
+                </h3>
+                <p className="leading-relaxed text-foreground/90">{view.description}</p>
+              </div>
+            )}
 
             {/* AI Reason — only when coming from AI search */}
-            {showReason && movie.reason && (
+            {showReason && view.reason && (
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 glow-primary-sm">
                 <div className="mb-2 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
@@ -216,13 +260,13 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                     {t("modal.aiReason")}
                   </h3>
                 </div>
-                <p className="text-sm leading-relaxed text-foreground/80">{movie.reason}</p>
+                <p className="text-sm leading-relaxed text-foreground/80">{view.reason}</p>
               </div>
             )}
 
             {/* Streaming platforms — only on AI results AND only if back returns any */}
-            {showReason && movie.platforms && movie.platforms.length > 0 && (
-              <PlatformsSection platforms={movie.platforms} />
+            {showReason && view.platforms && view.platforms.length > 0 && (
+              <PlatformsSection platforms={view.platforms} />
             )}
 
 
@@ -284,7 +328,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                     >
                       {t("modal.saveReview")}
                     </button>
-                    {getReview(movie.title) && (
+                    {getReview(view.title) && (
                       <button
                         onClick={handleClearReview}
                         className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm font-medium hover:bg-secondary"
@@ -298,7 +342,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             </div>
 
             {/* External reviews */}
-            <ExternalReviewsSection title={movie.title} />
+            <ExternalReviewsSection title={view.title} />
           </div>
         </motion.div>
       </motion.div>
