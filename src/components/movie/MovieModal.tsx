@@ -375,3 +375,77 @@ function ExternalReviewsSection({ title }: { title: string }) {
     </div>
   );
 }
+
+// Presets visuales para plataformas conocidas. Si llega un id desconocido,
+// usamos un fallback neutro con la inicial.
+const PLATFORM_PRESETS: Record<
+  string,
+  { name: string; bg: string; text: string; short: string }
+> = {
+  netflix:  { name: "Netflix",       bg: "bg-[#E50914]", text: "text-white", short: "N" },
+  prime:    { name: "Prime Video",   bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
+  amazon:   { name: "Prime Video",   bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
+  hbo:      { name: "HBO Max",       bg: "bg-[#9b51e0]", text: "text-white", short: "H" },
+  max:      { name: "Max",           bg: "bg-[#002BE7]", text: "text-white", short: "M" },
+  filmin:   { name: "Filmin",        bg: "bg-[#0a8bd6]", text: "text-white", short: "F" },
+  disney:   { name: "Disney+",       bg: "bg-[#113CCF]", text: "text-white", short: "D+" },
+  apple:    { name: "Apple TV+",     bg: "bg-[#111111]", text: "text-white", short: "" },
+  movistar: { name: "Movistar Plus+", bg: "bg-[#00B5E2]", text: "text-white", short: "M+" },
+  rakuten:  { name: "Rakuten TV",    bg: "bg-[#BF0000]", text: "text-white", short: "R" },
+  youtube:  { name: "YouTube",       bg: "bg-[#FF0000]", text: "text-white", short: "Y" },
+  skyshowtime: { name: "SkyShowtime", bg: "bg-[#1A1A2E]", text: "text-white", short: "S" },
+};
+
+function PlatformsSection({ platforms }: { platforms: StreamingPlatform[] }) {
+  const { t } = useI18n();
+
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-5">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        {t("modal.availableOn")}
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {platforms.map((p) => {
+          const key = p.id?.toLowerCase().trim();
+          const preset = PLATFORM_PRESETS[key];
+          const name = p.name || preset?.name || p.id;
+          const Tag: any = p.url ? "a" : "div";
+          const tagProps = p.url
+            ? { href: p.url, target: "_blank", rel: "noopener noreferrer" }
+            : {};
+
+          return (
+            <Tag
+              key={`${p.id}-${name}`}
+              {...tagProps}
+              className={cn(
+                "group flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2 text-sm font-medium transition-all",
+                p.url && "hover:border-primary/40 hover:bg-background hover:shadow-sm cursor-pointer"
+              )}
+            >
+              {p.logo_url ? (
+                <img
+                  src={p.logo_url}
+                  alt={name}
+                  className="h-6 w-6 rounded object-contain"
+                />
+              ) : (
+                <span
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded text-[10px] font-bold",
+                    preset?.bg ?? "bg-secondary",
+                    preset?.text ?? "text-secondary-foreground"
+                  )}
+                >
+                  {preset?.short ?? name.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="text-foreground/90">{name}</span>
+            </Tag>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
