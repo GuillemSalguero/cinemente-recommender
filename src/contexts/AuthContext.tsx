@@ -1,18 +1,23 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { authService, type BackendUser } from "@/lib/backend";
+import { tokenStore } from "@/lib/api";
 
 export interface User {
   id: string;
-  email: string;
   name: string;
   avatar?: string;
-  provider: "email" | "google";
+  /** Compat: el back no maneja email, pero lo dejamos opcional para UI antiguas. */
+  email?: string;
+  provider: "password" | "google";
 }
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  /** Login real contra /api/auth/login con `name` + `password`. */
+  login: (name: string, password: string) => Promise<void>;
+  /** Registro real contra /api/auth/register con `name` + `password`. */
+  register: (name: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
   updateProfile: (data: Partial<Pick<User, "name" | "avatar">>) => void;
@@ -20,94 +25,68 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "cinemente_user";
-const USERS_KEY = "cinemente_users";
+const USER_KEY = "cinemente_user";
 
-interface StoredUser extends User {
-  password?: string;
-}
+const fromBackend = (u: BackendUser): User => ({
+  id: String(u.id),
+  name: u.name,
+  provider: "password",
+});
 
-const readUsers = (): StoredUser[] => {
+const persistUser = (u: User | null) => {
   try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+    if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
+    else localStorage.removeItem(USER_KEY);
   } catch {
-    return [];
+    /* noop */
   }
-};
-
-const writeUsers = (users: StoredUser[]) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Restaurar sesión guardada (token + user). Solo si hay token válido en storage.
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setUser(JSON.parse(stored));
+      const token = tokenStore.get();
+      const stored = localStorage.getItem(USER_KEY);
+      if (token && stored) setUser(JSON.parse(stored));
     } catch {
-      // ignore
+      /* noop */
     }
     setIsLoading(false);
   }, []);
 
-  const persist = (u: User | null) => {
+  const apply = (u: User | null) => {
     setUser(u);
-    if (u) localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-    else localStorage.removeItem(STORAGE_KEY);
+    persistUser(u);
   };
 
-  const login = async (email: string, password: string) => {
-    await new Promise((r) => setTimeout(r, 600));
-    const users = readUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) throw new Error("Email o contraseña incorrectos");
-    const { password: _pw, ...safe } = found;
-    persist(safe);
+  const login = async (name: string, password: string) => {
+    const res = await authService.login(name.trim(), password);
+    apply(fromBackend(res.user));
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    await new Promise((r) => setTimeout(r, 600));
-    const users = readUsers();
-    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      throw new Error("Ese email ya está registrado");
-    }
-    const newUser: StoredUser = {
-      id: crypto.randomUUID(),
-      email,
-      name,
-      provider: "email",
-      password,
-    };
-    writeUsers([...users, newUser]);
-    const { password: _pw, ...safe } = newUser;
-    persist(safe);
+  const register = async (name: string, password: string) => {
+    const res = await authService.register(name.trim(), password);
+    apply(fromBackend(res.user));
   };
 
   const loginWithGoogle = async () => {
-    await new Promise((r) => setTimeout(r, 600));
-    const fakeUser: User = {
-      id: "google-demo",
-      email: "demo@gmail.com",
-      name: "Usuario Google",
-      avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Google",
-      provider: "google",
-    };
-    persist(fakeUser);
+    // No soportado por el backend actual. Se mantiene la firma para evitar romper la UI.
+    throw new Error("Google login no disponible todavía");
   };
 
-  const logout = () => persist(null);
+  const logout = () => {
+    authService.logout();
+    apply(null);
+  };
 
   const updateProfile = (data: Partial<Pick<User, "name" | "avatar">>) => {
     if (!user) return;
     const updated = { ...user, ...data };
-    persist(updated);
-    const users = readUsers();
-    writeUsers(users.map((u) => (u.id === user.id ? { ...u, ...data } : u)));
+    apply(updated);
   };
 
   return (
@@ -125,8 +104,8 @@ export const useAuth = () => {
   return ctx;
 };
 
-// Public, password-less listing for the "search users" feature.
-export const listAllUsers = (): User[] => {
-  return readUsers().map(({ password, ...safe }) => safe);
-};
-
+/**
+ * Compat: la pantalla de Users usaba este helper para listar usuarios locales.
+ * Sin endpoint público todavía, devolvemos lista vacía.
+ */
+export const listAllUsers = (): User[] => [];
