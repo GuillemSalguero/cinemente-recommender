@@ -220,6 +220,12 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
               </div>
             )}
 
+            {/* Streaming platforms — only on AI results AND only if back returns any */}
+            {showReason && movie.platforms && movie.platforms.length > 0 && (
+              <PlatformsSection platforms={movie.platforms} />
+            )}
+
+
             {/* Review section */}
             <div className="rounded-xl border border-border bg-card/50 p-5">
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
