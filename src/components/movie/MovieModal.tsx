@@ -328,7 +328,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                     >
                       {t("modal.saveReview")}
                     </button>
-                    {getReview(movie.title) && (
+                    {getReview(view.title) && (
                       <button
                         onClick={handleClearReview}
                         className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm font-medium hover:bg-secondary"
@@ -342,7 +342,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             </div>
 
             {/* External reviews */}
-            <ExternalReviewsSection title={movie.title} />
+            <ExternalReviewsSection title={view.title} />
           </div>
         </motion.div>
       </motion.div>
