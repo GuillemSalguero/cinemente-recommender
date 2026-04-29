@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Clock, Film, Sparkles, Heart, Bookmark, Star } from "lucide-react";
+import { X, Clock, Film, Sparkles, Heart, Bookmark, Star, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Movie, StreamingPlatform } from "@/types/movie";
 import { useHistory } from "@/hooks/useHistory";
@@ -12,7 +12,7 @@ import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getExternalReviews } from "@/data/externalReviews";
-import { useMemo } from "react";
+import { moviesService, mergeDetail } from "@/lib/backend";
 
 interface MovieModalProps {
   movie: Movie | null;
@@ -24,7 +24,7 @@ interface MovieModalProps {
 const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { addToHistory } = useHistory();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { inWatchlist, toggleWatchlist } = useWatchlist();
@@ -34,23 +34,51 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
 
+  // Detalle cargado del back al abrir el modal. Se mergea sobre la base.
+  const [detailed, setDetailed] = useState<Movie | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
   useEffect(() => {
     if (movie) addToHistory(movie);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movie?.title]);
 
   useEffect(() => {
-    if (!movie) return;
+    if (!movie) {
+      setDetailed(null);
+      return;
+    }
     const r = getReview(movie.title);
     setRating(r?.rating ?? 0);
     setReviewText(r?.text ?? "");
     setHoverRating(0);
-  }, [movie, getReview]);
+
+    // Reset detalle y pedir uno nuevo cuando cambia la película.
+    setDetailed(null);
+    const slug = movie.link || movie.title;
+    if (!slug) return;
+    let cancelled = false;
+    setLoadingDetail(true);
+    moviesService
+      .getBySlug(slug, lang)
+      .then((d) => {
+        if (cancelled) return;
+        setDetailed(mergeDetail(movie, d));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDetail(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [movie, getReview, lang]);
 
   if (!movie) return null;
 
-  const fav = isFavorite(movie.title);
-  const saved = inWatchlist(movie.title);
+  // A partir de aquí trabajamos siempre con la versión enriquecida (si llegó).
+  const view: Movie = detailed ?? movie;
+  const fav = isFavorite(view.title);
+  const saved = inWatchlist(view.title);
 
   const handleFav = () => {
     if (!user) return toast.error(t("modal.loginFav"));
