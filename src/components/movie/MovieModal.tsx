@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Clock, Film, Sparkles, Heart, Bookmark, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { Movie } from "@/types/movie";
+import type { Movie, StreamingPlatform } from "@/types/movie";
 import { useHistory } from "@/hooks/useHistory";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useWatchlist } from "@/hooks/useWatchlist";
