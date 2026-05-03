@@ -422,22 +422,38 @@ function ExternalReviewsSection({ title }: { title: string }) {
 
 // Presets visuales para plataformas conocidas. Si llega un id desconocido,
 // usamos un fallback neutro con la inicial.
+// Las claves se comparan contra el id normalizado (nombre lowercase sin espacios/símbolos).
 const PLATFORM_PRESETS: Record<
   string,
   { name: string; bg: string; text: string; short: string }
 > = {
-  netflix:  { name: "Netflix",       bg: "bg-[#E50914]", text: "text-white", short: "N" },
-  prime:    { name: "Prime Video",   bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
-  amazon:   { name: "Prime Video",   bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
-  hbo:      { name: "HBO Max",       bg: "bg-[#9b51e0]", text: "text-white", short: "H" },
-  max:      { name: "Max",           bg: "bg-[#002BE7]", text: "text-white", short: "M" },
-  filmin:   { name: "Filmin",        bg: "bg-[#0a8bd6]", text: "text-white", short: "F" },
-  disney:   { name: "Disney+",       bg: "bg-[#113CCF]", text: "text-white", short: "D+" },
-  apple:    { name: "Apple TV+",     bg: "bg-[#111111]", text: "text-white", short: "" },
-  movistar: { name: "Movistar Plus+", bg: "bg-[#00B5E2]", text: "text-white", short: "M+" },
-  rakuten:  { name: "Rakuten TV",    bg: "bg-[#BF0000]", text: "text-white", short: "R" },
-  youtube:  { name: "YouTube",       bg: "bg-[#FF0000]", text: "text-white", short: "Y" },
-  skyshowtime: { name: "SkyShowtime", bg: "bg-[#1A1A2E]", text: "text-white", short: "S" },
+  netflix:      { name: "Netflix",        bg: "bg-[#E50914]", text: "text-white", short: "N" },
+  primevideo:   { name: "Prime Video",    bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
+  prime:        { name: "Prime Video",    bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
+  amazon:       { name: "Prime Video",    bg: "bg-[#00A8E1]", text: "text-white", short: "P" },
+  hbo:          { name: "HBO Max",        bg: "bg-[#9b51e0]", text: "text-white", short: "H" },
+  hbomax:       { name: "HBO Max",        bg: "bg-[#9b51e0]", text: "text-white", short: "H" },
+  max:          { name: "Max",            bg: "bg-[#002BE7]", text: "text-white", short: "M" },
+  filmin:       { name: "Filmin",         bg: "bg-[#0a8bd6]", text: "text-white", short: "F" },
+  disney:       { name: "Disney+",        bg: "bg-[#113CCF]", text: "text-white", short: "D+" },
+  disneyplus:   { name: "Disney+",        bg: "bg-[#113CCF]", text: "text-white", short: "D+" },
+  apple:        { name: "Apple TV+",      bg: "bg-[#111111]", text: "text-white", short: "" },
+  appletv:      { name: "Apple TV",       bg: "bg-[#111111]", text: "text-white", short: "" },
+  appletvplus:  { name: "Apple TV+",      bg: "bg-[#111111]", text: "text-white", short: "" },
+  movistar:     { name: "Movistar Plus+", bg: "bg-[#00B5E2]", text: "text-white", short: "M+" },
+  movistarplus: { name: "Movistar Plus+", bg: "bg-[#00B5E2]", text: "text-white", short: "M+" },
+  rakuten:      { name: "Rakuten TV",     bg: "bg-[#BF0000]", text: "text-white", short: "R" },
+  rakutentv:    { name: "Rakuten TV",     bg: "bg-[#BF0000]", text: "text-white", short: "R" },
+  youtube:      { name: "YouTube",        bg: "bg-[#FF0000]", text: "text-white", short: "Y" },
+  skyshowtime:  { name: "SkyShowtime",    bg: "bg-[#1A1A2E]", text: "text-white", short: "S" },
+};
+
+const TYPE_LABELS: Record<string, { es: string; en: string; ca: string; de: string; fr: string }> = {
+  subscription: { es: "Suscripción", en: "Subscription", ca: "Subscripció", de: "Abo", fr: "Abonnement" },
+  rent:         { es: "Alquiler",    en: "Rent",         ca: "Lloguer",     de: "Leihen", fr: "Location" },
+  buy:          { es: "Comprar",     en: "Buy",          ca: "Comprar",     de: "Kaufen", fr: "Acheter" },
+  free:         { es: "Gratis",      en: "Free",         ca: "Gratis",      de: "Gratis", fr: "Gratuit" },
+  ads:          { es: "Con anuncios",en: "With ads",     ca: "Amb anuncis", de: "Mit Werbung", fr: "Avec pubs" },
 };
 
 function PlatformsSection({ platforms }: { platforms: StreamingPlatform[] }) {
