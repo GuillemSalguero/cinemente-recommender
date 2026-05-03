@@ -1,5 +1,5 @@
 import { authApi, recoApi, tokenStore } from "@/lib/api";
-import type { Movie, StreamingPlatform } from "@/types/movie";
+import type { Movie, StreamingPlatform, StreamingType } from "@/types/movie";
 
 // ============== Tipos del backend ==============
 
@@ -17,6 +17,14 @@ export interface LoginResponse {
   user: BackendUser;
 }
 
+/** Forma real que llega del back para cada plataforma de streaming. */
+export interface BackendStreamingPlatform {
+  nombre: string;
+  tipo: StreamingType;
+  link?: string;
+  logo_url?: string;
+}
+
 export interface RecoResult {
   title: string; // slug "m/ex_machina"
   year: string;
@@ -26,8 +34,10 @@ export interface RecoResult {
   score: number;
   signals: { sim_avg: number | null; tomatometer: number | null; count: number | null };
   snippets: string[];
-  streaming_availability: StreamingPlatform[] | null;
+  streaming_availability: BackendStreamingPlatform[] | null;
   link: string;
+  /** Póster directo (TMDB u otro) que ya viene en la respuesta del recomendador. */
+  poster?: string | null;
 }
 
 export interface RecoResponse {
@@ -51,7 +61,7 @@ export interface MovieDetail {
   director?: string;
   runtime?: number;
   tomatometer?: number;
-  streaming_availability?: StreamingPlatform[] | null;
+  streaming_availability?: BackendStreamingPlatform[] | null;
   platforms?: StreamingPlatform[] | null;
 }
 
@@ -59,12 +69,14 @@ export interface MovieDetail {
 
 export const authService = {
   async login(name: string, password: string): Promise<LoginResponse> {
+    // ENDPOINT AQUI: POST {AUTH_API}/auth/login   body: { name, password }
     const res = await authApi.post<LoginResponse>("/auth/login", { name, password }, { auth: false });
     if (res?.accessToken) tokenStore.set(res.accessToken);
     return res;
   },
 
   async register(name: string, password: string): Promise<LoginResponse> {
+    // ENDPOINT AQUI: POST {AUTH_API}/auth/register   body: { name, password }
     const res = await authApi.post<LoginResponse>("/auth/register", { name, password }, { auth: false });
     if (res?.accessToken) tokenStore.set(res.accessToken);
     return res;
@@ -88,6 +100,30 @@ export function titleFromSlug(slug: string): string {
     .join(" ");
 }
 
+/** Normaliza una plataforma del back ({nombre, tipo, link}) a nuestro modelo interno. */
+export function mapPlatform(p: BackendStreamingPlatform): StreamingPlatform {
+  const name = p.nombre || "";
+  const id = name
+    .toLowerCase()
+    .replace(/\+/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+  return {
+    id: id || name,
+    name,
+    type: p.tipo,
+    url: p.link,
+    logo_url: p.logo_url,
+  };
+}
+
+export function mapPlatforms(
+  list: BackendStreamingPlatform[] | null | undefined
+): StreamingPlatform[] | undefined {
+  if (!list || list.length === 0) return undefined;
+  return list.map(mapPlatform);
+}
+
 export function mapRecoResult(r: RecoResult): Movie {
   const reason = (r.snippets && r.snippets[0]) || "";
   return {
@@ -96,17 +132,18 @@ export function mapRecoResult(r: RecoResult): Movie {
     genre: r.genres || "",
     description: "", // se rellena al abrir el modal con el detalle
     reason,
-    poster_url: "",
+    poster_url: r.poster || "",
     director: r.directors || "",
     runtime: r.runtime || 0,
     tomatometer: r.signals?.tomatometer ?? 0,
     link: r.link || r.title,
-    platforms: r.streaming_availability ?? undefined,
+    platforms: mapPlatforms(r.streaming_availability),
   };
 }
 
 export const recoService = {
   async recommend(query: string, lang?: string): Promise<Movie[]> {
+    // ENDPOINT AQUI: POST {RECO_API}/recommend   body: { query, lang }
     const data = await recoApi.post<RecoResponse>(
       "/recommend",
       { query, lang },
@@ -127,6 +164,7 @@ export const moviesService = {
     const params = new URLSearchParams({ q: slugOrLink });
     if (lang) params.set("lang", lang);
     try {
+      // ENDPOINT AQUI: GET {AUTH_API}/movies?q={slug}&lang={lang}
       const data = await authApi.get<MovieDetail | MovieDetail[]>(`/movies?${params.toString()}`);
       if (!data) return null;
       if (Array.isArray(data)) return data[0] ?? null;
@@ -141,8 +179,9 @@ export const moviesService = {
 /** Mezcla los datos del detalle del back en un Movie ya existente. */
 export function mergeDetail(base: Movie, detail: MovieDetail | null): Movie {
   if (!detail) return base;
-  const platforms =
-    detail.platforms ?? detail.streaming_availability ?? base.platforms ?? undefined;
+  const detailPlatforms =
+    (detail.platforms as StreamingPlatform[] | null | undefined) ??
+    mapPlatforms(detail.streaming_availability);
   return {
     ...base,
     title: detail.display_title || detail.title || detail.name || base.title,
@@ -153,6 +192,6 @@ export function mergeDetail(base: Movie, detail: MovieDetail | null): Movie {
     tomatometer: detail.tomatometer ?? base.tomatometer,
     description: detail.description || detail.overview || base.description,
     poster_url: detail.poster_url || detail.poster || base.poster_url,
-    platforms: platforms ?? undefined,
+    platforms: detailPlatforms ?? base.platforms ?? undefined,
   };
 }
