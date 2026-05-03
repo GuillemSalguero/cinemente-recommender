@@ -338,7 +338,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                     >
                       {t("modal.saveReview")}
                     </button>
-                    {getReview(view.title) && (
+                    {getReview(slug) && (
                       <button
                         onClick={handleClearReview}
                         className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm font-medium hover:bg-secondary"
