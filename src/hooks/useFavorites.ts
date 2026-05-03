@@ -1,57 +1,105 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { Movie } from "@/types/movie";
 import { useAuth } from "@/contexts/AuthContext";
+import { userMoviesService, moviesService, detailToMovie } from "@/lib/backend";
 
-const keyFor = (userId: string) => `cinemente_favs_${userId}`;
-
+/**
+ * Favoritos sincronizados con el backend.
+ * El back guarda solo slugs ("m/ex_machina"); aquí los hidratamos con el detalle
+ * para poder pintar las cards completas.
+ */
 export function useFavorites() {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<Movie[]>([]);
+  // Set de slugs en favoritos (rápido para isFavorite y para evitar refetch).
+  const slugsRef = useRef<Set<string>>(new Set());
 
+  const setSlugs = (slugs: string[]) => {
+    slugsRef.current = new Set(slugs);
+  };
+
+  // Carga inicial cuando hay usuario.
   useEffect(() => {
     if (!user) {
       setFavorites([]);
+      slugsRef.current = new Set();
       return;
     }
-    try {
-      const raw = localStorage.getItem(keyFor(user.id));
-      setFavorites(raw ? JSON.parse(raw) : []);
-    } catch {
-      setFavorites([]);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const slugs = await userMoviesService.getFavorites();
+        if (cancelled) return;
+        setSlugs(slugs);
+        // Hidratamos en paralelo.
+        const detailed = await Promise.all(
+          slugs.map(async (slug) => {
+            try {
+              const d = await moviesService.getBySlug(slug);
+              return detailToMovie(slug, d);
+            } catch {
+              return detailToMovie(slug, null);
+            }
+          })
+        );
+        if (!cancelled) setFavorites(detailed);
+      } catch {
+        if (!cancelled) setFavorites([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  const persist = useCallback(
-    (next: Movie[]) => {
-      setFavorites(next);
-      if (user) localStorage.setItem(keyFor(user.id), JSON.stringify(next));
-    },
-    [user]
-  );
-
   const isFavorite = useCallback(
-    (title: string) => favorites.some((m) => m.title === title),
+    (titleOrLink: string) =>
+      slugsRef.current.has(titleOrLink) ||
+      favorites.some((m) => m.title === titleOrLink || m.link === titleOrLink),
     [favorites]
   );
 
   const toggleFavorite = useCallback(
     (movie: Movie) => {
       if (!user) return false;
-      const exists = favorites.some((m) => m.title === movie.title);
-      const next = exists
-        ? favorites.filter((m) => m.title !== movie.title)
-        : [...favorites, movie];
-      persist(next);
-      return !exists;
+      const slug = movie.link || movie.title;
+      const exists = slugsRef.current.has(slug) || favorites.some((m) => m.link === slug);
+
+      if (exists) {
+        slugsRef.current.delete(slug);
+        setFavorites((prev) => prev.filter((m) => m.link !== slug && m.title !== movie.title));
+        userMoviesService.removeFavorite(slug).catch(() => {
+          // rollback
+          slugsRef.current.add(slug);
+          setFavorites((prev) => [...prev, movie]);
+        });
+        return false;
+      }
+      slugsRef.current.add(slug);
+      setFavorites((prev) => [...prev, movie]);
+      userMoviesService.addFavorite(slug).catch(() => {
+        slugsRef.current.delete(slug);
+        setFavorites((prev) => prev.filter((m) => m.link !== slug));
+      });
+      return true;
     },
-    [favorites, user, persist]
+    [favorites, user]
   );
 
   const removeFavorite = useCallback(
-    (title: string) => {
-      persist(favorites.filter((m) => m.title !== title));
+    (titleOrLink: string) => {
+      const target = favorites.find((m) => m.title === titleOrLink || m.link === titleOrLink);
+      const slug = target?.link || titleOrLink;
+      slugsRef.current.delete(slug);
+      setFavorites((prev) => prev.filter((m) => m.link !== slug && m.title !== titleOrLink));
+      userMoviesService.removeFavorite(slug).catch(() => {
+        if (target) {
+          slugsRef.current.add(slug);
+          setFavorites((prev) => [...prev, target]);
+        }
+      });
     },
-    [favorites, persist]
+    [favorites]
   );
 
   return { favorites, isFavorite, toggleFavorite, removeFavorite };
