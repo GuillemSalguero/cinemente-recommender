@@ -1,11 +1,15 @@
+export type StreamingType = "subscription" | "rent" | "buy" | "free" | "ads" | string;
+
 export interface StreamingPlatform {
-  /** Identificador conocido (netflix, prime, hbo, filmin, disney, apple, movistar, ...) o cualquier slug del back. */
+  /** Identificador interno (derivado de `nombre` si el back no lo manda). */
   id: string;
-  /** Nombre legible. Si no llega, se infiere del id. */
+  /** Nombre legible (en el back llega como `nombre`). */
   name?: string;
-  /** URL directa para ver la película en esa plataforma. */
+  /** Tipo de disponibilidad (en el back llega como `tipo`): subscription, rent, buy... */
+  type?: StreamingType;
+  /** URL directa para ver/comprar/alquilar en esa plataforma (en el back llega como `link`). */
   url?: string;
-  /** Logo opcional servido por el back. */
+  /** Logo opcional. */
   logo_url?: string;
 }
 
@@ -23,4 +27,3 @@ export interface Movie {
   /** Plataformas donde está disponible. Solo se renderizan si llegan del back. */
   platforms?: StreamingPlatform[];
 }
-
