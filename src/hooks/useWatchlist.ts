@@ -1,57 +1,97 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { Movie } from "@/types/movie";
 import { useAuth } from "@/contexts/AuthContext";
+import { userMoviesService, moviesService, detailToMovie } from "@/lib/backend";
 
-const keyFor = (userId: string) => `cinemente_watchlist_${userId}`;
-
+/**
+ * Watchlist sincronizada con el backend.
+ * El back guarda solo slugs ("m/ex_machina"); aquí los hidratamos con detalle
+ * para pintar las cards completas.
+ */
 export function useWatchlist() {
   const { user } = useAuth();
   const [watchlist, setWatchlist] = useState<Movie[]>([]);
+  const slugsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) {
       setWatchlist([]);
+      slugsRef.current = new Set();
       return;
     }
-    try {
-      const raw = localStorage.getItem(keyFor(user.id));
-      setWatchlist(raw ? JSON.parse(raw) : []);
-    } catch {
-      setWatchlist([]);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const slugs = await userMoviesService.getWatchlist();
+        if (cancelled) return;
+        slugsRef.current = new Set(slugs);
+        const detailed = await Promise.all(
+          slugs.map(async (slug) => {
+            try {
+              const d = await moviesService.getBySlug(slug);
+              return detailToMovie(slug, d);
+            } catch {
+              return detailToMovie(slug, null);
+            }
+          })
+        );
+        if (!cancelled) setWatchlist(detailed);
+      } catch {
+        if (!cancelled) setWatchlist([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  const persist = useCallback(
-    (next: Movie[]) => {
-      setWatchlist(next);
-      if (user) localStorage.setItem(keyFor(user.id), JSON.stringify(next));
-    },
-    [user]
-  );
-
   const inWatchlist = useCallback(
-    (title: string) => watchlist.some((m) => m.title === title),
+    (titleOrLink: string) =>
+      slugsRef.current.has(titleOrLink) ||
+      watchlist.some((m) => m.title === titleOrLink || m.link === titleOrLink),
     [watchlist]
   );
 
   const toggleWatchlist = useCallback(
     (movie: Movie) => {
       if (!user) return false;
-      const exists = watchlist.some((m) => m.title === movie.title);
-      const next = exists
-        ? watchlist.filter((m) => m.title !== movie.title)
-        : [...watchlist, movie];
-      persist(next);
-      return !exists;
+      const slug = movie.link || movie.title;
+      const exists = slugsRef.current.has(slug) || watchlist.some((m) => m.link === slug);
+
+      if (exists) {
+        slugsRef.current.delete(slug);
+        setWatchlist((prev) => prev.filter((m) => m.link !== slug && m.title !== movie.title));
+        userMoviesService.removeWatchlist(slug).catch(() => {
+          slugsRef.current.add(slug);
+          setWatchlist((prev) => [...prev, movie]);
+        });
+        return false;
+      }
+      slugsRef.current.add(slug);
+      setWatchlist((prev) => [...prev, movie]);
+      userMoviesService.addWatchlist(slug).catch(() => {
+        slugsRef.current.delete(slug);
+        setWatchlist((prev) => prev.filter((m) => m.link !== slug));
+      });
+      return true;
     },
-    [watchlist, user, persist]
+    [watchlist, user]
   );
 
   const removeFromWatchlist = useCallback(
-    (title: string) => {
-      persist(watchlist.filter((m) => m.title !== title));
+    (titleOrLink: string) => {
+      const target = watchlist.find((m) => m.title === titleOrLink || m.link === titleOrLink);
+      const slug = target?.link || titleOrLink;
+      slugsRef.current.delete(slug);
+      setWatchlist((prev) => prev.filter((m) => m.link !== slug && m.title !== titleOrLink));
+      userMoviesService.removeWatchlist(slug).catch(() => {
+        if (target) {
+          slugsRef.current.add(slug);
+          setWatchlist((prev) => [...prev, target]);
+        }
+      });
     },
-    [watchlist, persist]
+    [watchlist]
   );
 
   return { watchlist, inWatchlist, toggleWatchlist, removeFromWatchlist };

@@ -195,3 +195,81 @@ export function mergeDetail(base: Movie, detail: MovieDetail | null): Movie {
     platforms: detailPlatforms ?? base.platforms ?? undefined,
   };
 }
+
+/** Crea un Movie mínimo a partir de un slug + (opcional) detalle del back. */
+export function detailToMovie(slug: string, detail: MovieDetail | null): Movie {
+  const base: Movie = {
+    title: titleFromSlug(slug),
+    year: "",
+    genre: "",
+    description: "",
+    reason: "",
+    poster_url: "",
+    director: "",
+    runtime: 0,
+    tomatometer: 0,
+    link: slug,
+  };
+  return mergeDetail(base, detail);
+}
+
+// ============== Watchlist / Favorites / Reviews ==============
+
+export interface BackendReview {
+  movieLink: string;
+  rating: number;
+  reviewText: string;
+}
+
+const extractList = <T>(data: T[] | { items?: T[] } | null | undefined): T[] => {
+  if (!data) return [];
+  return Array.isArray(data) ? data : data.items ?? [];
+};
+
+export const userMoviesService = {
+  // ---- Watchlist ----
+  async getWatchlist(): Promise<string[]> {
+    // ENDPOINT AQUI: GET {AUTH_API}/movies/watchlist  → string[] de slugs
+    return extractList(await authApi.get<string[] | { items?: string[] }>("/movies/watchlist"));
+  },
+  async addWatchlist(movieLink: string): Promise<void> {
+    // ENDPOINT AQUI: POST {AUTH_API}/movies/watchlist  body: { movieLink }
+    await authApi.post<void>("/movies/watchlist", { movieLink });
+  },
+  async removeWatchlist(movieLink: string): Promise<void> {
+    // ENDPOINT AQUI: DELETE {AUTH_API}/movies/watchlist  body: { movieLink }
+    await authApi.delete<void>("/movies/watchlist", { movieLink });
+  },
+
+  // ---- Favorites ----
+  async getFavorites(): Promise<string[]> {
+    // ENDPOINT AQUI: GET {AUTH_API}/movies/favorites  → string[] de slugs
+    return extractList(await authApi.get<string[] | { items?: string[] }>("/movies/favorites"));
+  },
+  async addFavorite(movieLink: string): Promise<void> {
+    // ENDPOINT AQUI: POST {AUTH_API}/movies/favorites  body: { movieLink }
+    await authApi.post<void>("/movies/favorites", { movieLink });
+  },
+  async removeFavorite(movieLink: string): Promise<void> {
+    // ENDPOINT AQUI: DELETE {AUTH_API}/movies/favorites  body: { movieLink }
+    await authApi.delete<void>("/movies/favorites", { movieLink });
+  },
+
+  // ---- Reviews ----
+  async getReviews(): Promise<BackendReview[]> {
+    // ENDPOINT AQUI: GET {AUTH_API}/movies/reviews  → BackendReview[]
+    return extractList(await authApi.get<BackendReview[] | { items?: BackendReview[] }>("/movies/reviews"));
+  },
+  async createReview(movieLink: string, rating: number, reviewText: string): Promise<void> {
+    // ENDPOINT AQUI: POST {AUTH_API}/movies/reviews  body: { movieLink, rating, reviewText }
+    await authApi.post<void>("/movies/reviews", { movieLink, rating, reviewText });
+  },
+  async updateReview(movieLink: string, rating: number, reviewText: string): Promise<void> {
+    // ENDPOINT AQUI: PUT {AUTH_API}/movies/reviews  body: { movieLink, rating, reviewText }
+    await authApi.put<void>("/movies/reviews", { movieLink, rating, reviewText });
+  },
+  async deleteReview(movieLink: string): Promise<void> {
+    // ENDPOINT AQUI: DELETE {AUTH_API}/movies/reviews  body: { movieLink }
+    await authApi.delete<void>("/movies/reviews", { movieLink });
+  },
+};

@@ -48,14 +48,14 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
       setDetailed(null);
       return;
     }
-    const r = getReview(movie.title);
+    const slug = movie.link || movie.title;
+    const r = getReview(slug);
     setRating(r?.rating ?? 0);
     setReviewText(r?.text ?? "");
     setHoverRating(0);
 
     // Reset detalle y pedir uno nuevo cuando cambia la película.
     setDetailed(null);
-    const slug = movie.link || movie.title;
     if (!slug) return;
     let cancelled = false;
     setLoadingDetail(true);
@@ -77,8 +77,9 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 
   // A partir de aquí trabajamos siempre con la versión enriquecida (si llegó).
   const view: Movie = detailed ?? movie;
-  const fav = isFavorite(view.title);
-  const saved = inWatchlist(view.title);
+  const slug = view.link || view.title;
+  const fav = isFavorite(slug);
+  const saved = inWatchlist(slug);
 
   const handleFav = () => {
     if (!user) return toast.error(t("modal.loginFav"));
@@ -92,20 +93,29 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
     toast.success(added ? t("modal.addedWatch") : t("modal.removedWatch"));
   };
 
-  const handleSaveReview = () => {
+  const handleSaveReview = async () => {
     if (!user) return toast.error(t("modal.loginToReview"));
     if (rating === 0) return toast.error(t("modal.selectStars"));
-    saveReview(view.title, rating, reviewText.trim());
-    toast.success(t("modal.reviewSaved"));
+    try {
+      await saveReview(slug, rating, reviewText.trim());
+      toast.success(t("modal.reviewSaved"));
+    } catch {
+      toast.error("Error");
+    }
   };
 
-  const handleClearReview = () => {
+  const handleClearReview = async () => {
     if (!user) return;
-    removeReview(view.title);
-    setRating(0);
-    setReviewText("");
-    toast.success(t("modal.reviewDeleted"));
+    try {
+      await removeReview(slug);
+      setRating(0);
+      setReviewText("");
+      toast.success(t("modal.reviewDeleted"));
+    } catch {
+      toast.error("Error");
+    }
   };
+
 
   const handleDirectorClick = (name: string) => {
     onClose();
@@ -328,7 +338,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
                     >
                       {t("modal.saveReview")}
                     </button>
-                    {getReview(view.title) && (
+                    {getReview(slug) && (
                       <button
                         onClick={handleClearReview}
                         className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm font-medium hover:bg-secondary"

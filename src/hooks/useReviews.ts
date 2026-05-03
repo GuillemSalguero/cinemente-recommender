@@ -1,14 +1,21 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { userMoviesService } from "@/lib/backend";
 
 export interface Review {
   rating: number; // 1-5
   text: string;
   updatedAt: number;
+  /** Slug del back ("m/ex_machina"). */
+  movieLink?: string;
 }
 
-const keyFor = (userId: string) => `cinemente_reviews_${userId}`;
-
+/**
+ * Reviews del usuario sincronizadas con el backend.
+ * Las reviews se identifican por `movieLink`, pero la UI antigua las consultaba
+ * por `title`. Para mantener compatibilidad, el `MovieModal` debe pasar el
+ * `link` cuando lo tenga; si solo viene `title`, también lo aceptamos como key.
+ */
 type ReviewMap = Record<string, Review>;
 
 export function useReviews() {
@@ -20,46 +27,79 @@ export function useReviews() {
       setReviews({});
       return;
     }
-    try {
-      const raw = localStorage.getItem(keyFor(user.id));
-      setReviews(raw ? JSON.parse(raw) : {});
-    } catch {
-      setReviews({});
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await userMoviesService.getReviews();
+        if (cancelled) return;
+        const map: ReviewMap = {};
+        for (const r of list) {
+          map[r.movieLink] = {
+            rating: r.rating,
+            text: r.reviewText,
+            movieLink: r.movieLink,
+            updatedAt: Date.now(),
+          };
+        }
+        setReviews(map);
+      } catch {
+        if (!cancelled) setReviews({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  const persist = useCallback(
-    (next: ReviewMap) => {
-      setReviews(next);
-      if (user) localStorage.setItem(keyFor(user.id), JSON.stringify(next));
-    },
-    [user]
-  );
-
   const getReview = useCallback(
-    (title: string): Review | undefined => reviews[title],
+    (key: string): Review | undefined => reviews[key],
     [reviews]
   );
 
   const saveReview = useCallback(
-    (title: string, rating: number, text: string) => {
+    async (key: string, rating: number, text: string) => {
       if (!user) return;
-      const next = {
+      const movieLink = key; // se espera que la UI use el slug
+      const exists = !!reviews[movieLink];
+      const next: ReviewMap = {
         ...reviews,
-        [title]: { rating, text, updatedAt: Date.now() },
+        [movieLink]: { rating, text, movieLink, updatedAt: Date.now() },
       };
-      persist(next);
+      setReviews(next);
+      try {
+        if (exists) {
+          await userMoviesService.updateReview(movieLink, rating, text);
+        } else {
+          await userMoviesService.createReview(movieLink, rating, text);
+        }
+      } catch (e) {
+        // rollback
+        const rollback = { ...next };
+        if (exists) rollback[movieLink] = reviews[movieLink];
+        else delete rollback[movieLink];
+        setReviews(rollback);
+        throw e;
+      }
     },
-    [reviews, user, persist]
+    [reviews, user]
   );
 
   const removeReview = useCallback(
-    (title: string) => {
+    async (key: string) => {
+      const movieLink = key;
+      const prev = reviews[movieLink];
+      if (!prev) return;
       const next = { ...reviews };
-      delete next[title];
-      persist(next);
+      delete next[movieLink];
+      setReviews(next);
+      try {
+        await userMoviesService.deleteReview(movieLink);
+      } catch (e) {
+        setReviews({ ...next, [movieLink]: prev });
+        throw e;
+      }
     },
-    [reviews, persist]
+    [reviews]
   );
 
   return { reviews, getReview, saveReview, removeReview };
