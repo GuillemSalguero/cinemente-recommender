@@ -457,7 +457,7 @@ const TYPE_LABELS: Record<string, { es: string; en: string; ca: string; de: stri
 };
 
 function PlatformsSection({ platforms }: { platforms: StreamingPlatform[] }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   return (
     <div className="rounded-xl border border-border bg-card/40 p-5">
@@ -473,10 +473,13 @@ function PlatformsSection({ platforms }: { platforms: StreamingPlatform[] }) {
           const tagProps = p.url
             ? { href: p.url, target: "_blank", rel: "noopener noreferrer" }
             : {};
+          const typeKey = (p.type || "").toLowerCase();
+          const typeLabel =
+            TYPE_LABELS[typeKey]?.[lang as "es" | "en" | "ca" | "de" | "fr"] ?? p.type;
 
           return (
             <Tag
-              key={`${p.id}-${name}`}
+              key={`${p.id}-${name}-${p.type ?? ""}`}
               {...tagProps}
               className={cn(
                 "group flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2 text-sm font-medium transition-all",
@@ -501,6 +504,11 @@ function PlatformsSection({ platforms }: { platforms: StreamingPlatform[] }) {
                 </span>
               )}
               <span className="text-foreground/90">{name}</span>
+              {typeLabel && (
+                <span className="rounded-md bg-secondary/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {typeLabel}
+                </span>
+              )}
             </Tag>
           );
         })}
