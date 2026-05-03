@@ -89,6 +89,10 @@ export const authApi = {
   get: <T>(path: string, opts?: RequestOptions) => request<T>(AUTH_API, path, opts),
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(AUTH_API, path, { ...opts, method: "POST", body }),
+  put: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(AUTH_API, path, { ...opts, method: "PUT", body }),
+  delete: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(AUTH_API, path, { ...opts, method: "DELETE", body }),
 };
 
 export const recoApi = {
