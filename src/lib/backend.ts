@@ -169,12 +169,12 @@ export const moviesService = {
    * Pide el detalle de una película al catálogo (servidor 8083).
    * `slugOrLink` es algo como "m/ex_machina".
    */
-  async getBySlug(slugOrLink: string, lang?: string): Promise<MovieDetail | null> {
-    const params = new URLSearchParams({ q: slugOrLink });
-    if (lang) params.set("lang", lang);
+  async getBySlug(slugOrLink: string, _lang?: string): Promise<MovieDetail | null> {
     try {
-      // ENDPOINT AQUI: GET {AUTH_API}/movies?q={slug}&lang={lang}
-      const data = await authApi.get<MovieDetail | MovieDetail[]>(`/movies?${params.toString()}`);
+      // ENDPOINT AQUI: POST {AUTH_API}/movies/detail  body: { id: "m/..." }
+      const data = await authApi.post<MovieDetail | MovieDetail[]>("/movies/detail", {
+        id: slugOrLink,
+      });
       if (!data) return null;
       if (Array.isArray(data)) return data[0] ?? null;
       return data;
@@ -185,6 +185,13 @@ export const moviesService = {
   },
 };
 
+/** Extrae el año (YYYY) de una fecha tipo "2010-02-12". */
+function yearFromDate(date?: string): string {
+  if (!date) return "";
+  const m = /^(\d{4})/.exec(date);
+  return m ? m[1] : "";
+}
+
 /** Mezcla los datos del detalle del back en un Movie ya existente. */
 export function mergeDetail(base: Movie, detail: MovieDetail | null): Movie {
   if (!detail) return base;
@@ -193,13 +200,13 @@ export function mergeDetail(base: Movie, detail: MovieDetail | null): Movie {
     mapPlatforms(detail.streaming_availability);
   return {
     ...base,
-    title: detail.display_title || detail.title || detail.name || base.title,
-    year: (detail.year as string) || base.year,
-    genre: detail.genres || detail.genre || base.genre,
-    director: detail.directors || detail.director || base.director,
+    title: detail.movieTitle || base.title,
+    year: yearFromDate(detail.originalReleaseDate) || base.year,
+    genre: detail.genres || base.genre,
+    director: detail.directors || base.director,
     runtime: detail.runtime ?? base.runtime,
-    tomatometer: detail.tomatometer ?? base.tomatometer,
-    description: detail.description || detail.overview || base.description,
+    tomatometer: detail.tomatometerRating ?? base.tomatometer,
+    description: detail.movieInfo || detail.criticsConsensus || base.description,
     poster_url: detail.poster_url || detail.poster || base.poster_url,
     platforms: detailPlatforms ?? base.platforms ?? undefined,
   };
