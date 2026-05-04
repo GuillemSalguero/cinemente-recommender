@@ -164,24 +164,80 @@ export const recoService = {
 
 // ============== Detalle de película ==============
 
+/**
+ * Cache LRU sencilla en memoria + sessionStorage para detalles de película.
+ * Evita repegar el endpoint /movies/detail por cada favorito/watchlist al recargar.
+ */
+const DETAIL_CACHE_MAX = 200;
+const DETAIL_CACHE_KEY = "cinemente_detail_cache_v1";
+const detailMemory = new Map<string, MovieDetail | null>();
+const detailInflight = new Map<string, Promise<MovieDetail | null>>();
+
+(function hydrateDetailCache() {
+  try {
+    const raw = sessionStorage.getItem(DETAIL_CACHE_KEY);
+    if (!raw) return;
+    const obj = JSON.parse(raw) as Record<string, MovieDetail | null>;
+    for (const [k, v] of Object.entries(obj)) detailMemory.set(k, v);
+  } catch { /* noop */ }
+})();
+
+function persistDetailCache() {
+  try {
+    const obj: Record<string, MovieDetail | null> = {};
+    for (const [k, v] of detailMemory) obj[k] = v;
+    sessionStorage.setItem(DETAIL_CACHE_KEY, JSON.stringify(obj));
+  } catch { /* noop */ }
+}
+
+function setDetailCache(slug: string, value: MovieDetail | null) {
+  if (detailMemory.has(slug)) detailMemory.delete(slug);
+  detailMemory.set(slug, value);
+  while (detailMemory.size > DETAIL_CACHE_MAX) {
+    const firstKey = detailMemory.keys().next().value;
+    if (firstKey === undefined) break;
+    detailMemory.delete(firstKey);
+  }
+  persistDetailCache();
+}
+
 export const moviesService = {
   /**
    * Pide el detalle de una película al catálogo (servidor 8083).
    * `slugOrLink` es algo como "m/ex_machina".
+   * Cachea el resultado en memoria + sessionStorage y deduplica peticiones en vuelo.
    */
   async getBySlug(slugOrLink: string, _lang?: string): Promise<MovieDetail | null> {
-    try {
-      // ENDPOINT AQUI: POST {AUTH_API}/movies/detail  body: { id: "m/..." }
-      const data = await authApi.post<MovieDetail | MovieDetail[]>("/movies/detail", {
-        id: slugOrLink,
-      });
-      if (!data) return null;
-      if (Array.isArray(data)) return data[0] ?? null;
-      return data;
-    } catch (e) {
-      console.warn("[moviesService] detail failed for", slugOrLink, e);
-      return null;
+    if (detailMemory.has(slugOrLink)) {
+      return detailMemory.get(slugOrLink) ?? null;
     }
+    const inflight = detailInflight.get(slugOrLink);
+    if (inflight) return inflight;
+
+    const promise = (async () => {
+      try {
+        // ENDPOINT AQUI: POST {AUTH_API}/movies/detail  body: { id: "m/..." }
+        const data = await authApi.post<MovieDetail | MovieDetail[]>("/movies/detail", {
+          id: slugOrLink,
+        });
+        const result = !data ? null : Array.isArray(data) ? data[0] ?? null : data;
+        setDetailCache(slugOrLink, result);
+        return result;
+      } catch (e) {
+        console.warn("[moviesService] detail failed for", slugOrLink, e);
+        return null;
+      } finally {
+        detailInflight.delete(slugOrLink);
+      }
+    })();
+    detailInflight.set(slugOrLink, promise);
+    return promise;
+  },
+
+  /** Limpia la cache (útil al hacer logout o forzar refresh). */
+  clearDetailCache() {
+    detailMemory.clear();
+    try { sessionStorage.removeItem(DETAIL_CACHE_KEY); } catch { /* noop */ }
   },
 };
 
