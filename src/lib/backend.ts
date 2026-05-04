@@ -45,22 +45,31 @@ export interface RecoResponse {
   results: RecoResult[];
 }
 
-// Respuesta del endpoint de detalle: GET /api/movies?q=m/ex_machina
+// Respuesta del endpoint de detalle: POST /api/movies/detail body: { id: "m/..." }
 export interface MovieDetail {
-  title?: string;
-  display_title?: string;
-  name?: string;
-  year?: string | number;
-  description?: string;
-  overview?: string;
+  rottenTomatoesLink?: string;
+  movieTitle?: string;
+  movieInfo?: string;
+  criticsConsensus?: string;
+  contentRating?: string;
+  genres?: string;
+  directors?: string;
+  authors?: string;
+  actors?: string;
+  originalReleaseDate?: string;
+  streamingReleaseDate?: string;
+  runtime?: number;
+  productionCompany?: string;
+  tomatometerStatus?: string;
+  tomatometerRating?: number;
+  tomatometerCount?: number;
+  audienceStatus?: string;
+  audienceRating?: number;
+  audienceCount?: number;
+  tomatometerFreshCriticsCount?: number;
+  // campos opcionales que algún backend podría añadir
   poster_url?: string;
   poster?: string;
-  genres?: string;
-  genre?: string;
-  directors?: string;
-  director?: string;
-  runtime?: number;
-  tomatometer?: number;
   streaming_availability?: BackendStreamingPlatform[] | null;
   platforms?: StreamingPlatform[] | null;
 }
