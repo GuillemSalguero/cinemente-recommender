@@ -366,6 +366,12 @@ export interface BackendFriend {
 }
 
 export const friendsService = {
+  async searchByName(name: string): Promise<BackendFriend[]> {
+    // ENDPOINT AQUI: GET {AUTH_API}/users/find/user?name=...
+    const q = encodeURIComponent(name);
+    const data = await authApi.get<BackendFriend[] | { items?: BackendFriend[] }>(`/users/find/user?name=${q}`);
+    return extractList(data);
+  },
   async getUser(userId: number | string): Promise<BackendFriend | null> {
     // ENDPOINT AQUI: GET {AUTH_API}/users/{id}
     return authApi.get<BackendFriend>(`/users/${userId}`);
