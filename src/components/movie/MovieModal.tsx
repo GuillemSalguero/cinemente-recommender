@@ -11,8 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getExternalReviews } from "@/data/externalReviews";
-import { moviesService, mergeDetail } from "@/lib/backend";
+import { moviesService, mergeDetail, userMoviesService } from "@/lib/backend";
 
 interface MovieModalProps {
   movie: Movie | null;
@@ -352,7 +351,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             </div>
 
             {/* External reviews */}
-            <ExternalReviewsSection title={view.title} />
+            <ExternalReviewsSection movieLink={slug} />
           </div>
         </motion.div>
       </motion.div>
@@ -362,11 +361,33 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 
 export default MovieModal;
 
-function ExternalReviewsSection({ title }: { title: string }) {
-  const { t } = useI18n();
-  const reviews = useMemo(() => getExternalReviews(title, 12), [title]);
+function ExternalReviewsSection({ movieLink }: { movieLink: string }) {
+  const { t, lang } = useI18n();
+  const [reviews, setReviews] = useState<Array<{ userId: number; rating: number; reviewText: string; createdAt: string }>>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!movieLink) return;
+    let cancelled = false;
+    setLoading(true);
+    userMoviesService
+      .getPublicReviews(movieLink)
+      .then((data) => {
+        if (!cancelled) setReviews(data);
+      })
+      .catch(() => {
+        if (!cancelled) setReviews([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [movieLink]);
+
   const avg = useMemo(
-    () => reviews.reduce((s, r) => s + r.rating, 0) / reviews.length,
+    () => (reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0),
     [reviews]
   );
 
@@ -376,56 +397,68 @@ function ExternalReviewsSection({ title }: { title: string }) {
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           {t("modal.extReviews")} ({reviews.length})
         </h3>
-        <div className="flex items-center gap-1.5 text-sm">
-          <Star className="h-4 w-4 fill-primary text-primary" />
-          <span className="font-semibold">{avg.toFixed(1)}</span>
-          <span className="text-muted-foreground">/ 5</span>
-        </div>
+        {reviews.length > 0 && (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Star className="h-4 w-4 fill-primary text-primary" />
+            <span className="font-semibold">{avg.toFixed(1)}</span>
+            <span className="text-muted-foreground">/ 5</span>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-3">
-        {reviews.map((r, i) => (
-          <div
-            key={`${r.author}-${i}`}
-            className="rounded-lg border border-border/60 bg-background/40 p-4"
-          >
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-xs font-bold text-primary-foreground">
-                  {r.author
-                    .split(" ")
-                    .map((p) => p[0])
-                    .slice(0, 2)
-                    .join("")}
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : reviews.length === 0 ? (
+        <p className="py-4 text-center text-sm text-muted-foreground">—</p>
+      ) : (
+        <div className="space-y-3">
+          {reviews.map((r, i) => {
+            const author = `User #${r.userId}`;
+            const date = new Date(r.createdAt).toLocaleDateString(lang, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+            return (
+              <div
+                key={`${r.userId}-${i}`}
+                className="rounded-lg border border-border/60 bg-background/40 p-4"
+              >
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-primary text-xs font-bold text-primary-foreground">
+                      {String(r.userId).slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{author}</p>
+                      <p className="text-xs text-muted-foreground">{date}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          r.rating >= n
+                            ? "fill-primary text-primary"
+                            : "text-muted-foreground/30"
+                        )}
+                      />
+                    ))}
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      {r.rating.toFixed(1)}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{r.author}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {r.source} · {r.date}
-                  </p>
-                </div>
+                <p className="text-sm leading-relaxed text-foreground/80">{r.reviewText}</p>
               </div>
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <Star
-                    key={n}
-                    className={cn(
-                      "h-3.5 w-3.5",
-                      r.rating >= n
-                        ? "fill-primary text-primary"
-                        : "text-muted-foreground/30"
-                    )}
-                  />
-                ))}
-                <span className="ml-1 text-xs text-muted-foreground">
-                  {r.rating.toFixed(1)}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed text-foreground/80">{r.text}</p>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
