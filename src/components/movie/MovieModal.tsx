@@ -11,8 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getExternalReviews } from "@/data/externalReviews";
-import { moviesService, mergeDetail } from "@/lib/backend";
+import { moviesService, mergeDetail, userMoviesService } from "@/lib/backend";
 
 interface MovieModalProps {
   movie: Movie | null;
