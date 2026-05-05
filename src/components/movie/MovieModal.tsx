@@ -462,7 +462,6 @@ function ExternalReviewsSection({ movieLink }: { movieLink: string }) {
     </div>
   );
 }
-}
 
 // Presets visuales para plataformas conocidas. Si llega un id desconocido,
 // usamos un fallback neutro con la inicial.
