@@ -351,7 +351,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             </div>
 
             {/* External reviews */}
-            <ExternalReviewsSection title={view.title} />
+            <ExternalReviewsSection movieLink={slug} />
           </div>
         </motion.div>
       </motion.div>
