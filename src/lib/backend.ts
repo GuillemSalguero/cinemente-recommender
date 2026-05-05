@@ -333,6 +333,11 @@ export const userMoviesService = {
   },
 
   // ---- Reviews ----
+  async getPublicReviews(movieLink: string): Promise<Array<{ userId: number; movieLink: string; rating: number; reviewText: string; createdAt: string }>> {
+    // ENDPOINT AQUI: POST {AUTH_API}/movies/reviews/public  body: { movieLink }
+    const data = await authApi.post<any>("/movies/reviews/public", { movieLink });
+    return extractList(data);
+  },
   async getReviews(): Promise<BackendReview[]> {
     // ENDPOINT AQUI: GET {AUTH_API}/movies/reviews  → BackendReview[]
     return extractList(await authApi.get<BackendReview[] | { items?: BackendReview[] }>("/movies/reviews"));
