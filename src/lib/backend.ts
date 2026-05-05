@@ -301,8 +301,10 @@ const extractList = <T>(data: T[] | { items?: T[] } | null | undefined): T[] => 
 export const userMoviesService = {
   // ---- Watchlist ----
   async getWatchlist(): Promise<string[]> {
-    // ENDPOINT AQUI: GET {AUTH_API}/movies/watchlist  → string[] de slugs
-    return extractList(await authApi.get<string[] | { items?: string[] }>("/movies/watchlist"));
+    const data = await authApi.get<any[]>("/movies/watchlist");
+    return extractList(data).map((item) =>
+      typeof item === "string" ? item : item.movieLink
+    );
   },
   async addWatchlist(movieLink: string): Promise<void> {
     // ENDPOINT AQUI: POST {AUTH_API}/movies/watchlist  body: { movieLink }
@@ -315,8 +317,11 @@ export const userMoviesService = {
 
   // ---- Favorites ----
   async getFavorites(): Promise<string[]> {
-    // ENDPOINT AQUI: GET {AUTH_API}/movies/favorites  → string[] de slugs
-    return extractList(await authApi.get<string[] | { items?: string[] }>("/movies/favorites"));
+    const data = await authApi.get<any[]>("/movies/favorites");
+    // ✅ Extraer solo el movieLink de cada objeto
+    return extractList(data).map((item) =>
+      typeof item === "string" ? item : item.movieLink
+    );
   },
   async addFavorite(movieLink: string): Promise<void> {
     // ENDPOINT AQUI: POST {AUTH_API}/movies/favorites  body: { movieLink }
