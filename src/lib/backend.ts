@@ -355,3 +355,32 @@ export const userMoviesService = {
     await authApi.delete<void>("/movies/reviews", { movieLink });
   },
 };
+
+// ============== Friends ==============
+
+export interface BackendFriend {
+  id: number;
+  name: string;
+  favFilms?: unknown;
+  friend?: unknown;
+}
+
+export const friendsService = {
+  async getUser(userId: number | string): Promise<BackendFriend | null> {
+    // ENDPOINT AQUI: GET {AUTH_API}/users/{id}
+    return authApi.get<BackendFriend>(`/users/${userId}`);
+  },
+  async getFriends(userId: number | string): Promise<BackendFriend[]> {
+    // ENDPOINT AQUI: GET {AUTH_API}/users/{id}/friends
+    const data = await authApi.get<BackendFriend[] | { items?: BackendFriend[] }>(`/users/${userId}/friends`);
+    return extractList(data);
+  },
+  async addFriend(userId: number | string, friendId: number): Promise<void> {
+    // ENDPOINT AQUI: POST {AUTH_API}/users/{id}/friends  body: { friendId }
+    await authApi.post<void>(`/users/${userId}/friends`, { friendId });
+  },
+  async removeFriend(userId: number | string, friendId: number): Promise<void> {
+    // ENDPOINT AQUI: DELETE {AUTH_API}/users/{id}/friends/{friendId}
+    await authApi.delete<void>(`/users/${userId}/friends/${friendId}`);
+  },
+};
