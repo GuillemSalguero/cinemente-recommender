@@ -25,17 +25,20 @@ export function useWatchlist() {
         const slugs = await userMoviesService.getWatchlist();
         if (cancelled) return;
         slugsRef.current = new Set(slugs);
-        const detailed = await Promise.all(
-          slugs.map(async (slug) => {
-            try {
-              const d = await moviesService.getBySlug(slug);
-              return detailToMovie(slug, d);
-            } catch {
-              return detailToMovie(slug, null);
-            }
-          })
-        );
-        if (!cancelled) setWatchlist(detailed);
+        // Pinta inmediatamente con datos mínimos para no bloquear la UI.
+        setWatchlist(slugs.map((s) => detailToMovie(s, null)));
+        // Hidrata cada película en background.
+        slugs.forEach((slug) => {
+          moviesService
+            .getBySlug(slug)
+            .then((d) => {
+              if (cancelled) return;
+              setWatchlist((prev) =>
+                prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+              );
+            })
+            .catch(() => { /* ya hay placeholder */ });
+        });
       } catch {
         if (!cancelled) setWatchlist([]);
       }
