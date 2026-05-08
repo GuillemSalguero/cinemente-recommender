@@ -31,18 +31,20 @@ export function useFavorites() {
         const slugs = await userMoviesService.getFavorites();
         if (cancelled) return;
         setSlugs(slugs);
-        // Hidratamos en paralelo.
-        const detailed = await Promise.all(
-          slugs.map(async (slug) => {
-            try {
-              const d = await moviesService.getBySlug(slug);
-              return detailToMovie(slug, d);
-            } catch {
-              return detailToMovie(slug, null);
-            }
-          })
-        );
-        if (!cancelled) setFavorites(detailed);
+        // Pinta inmediatamente con datos mínimos para no bloquear la UI.
+        setFavorites(slugs.map((s) => detailToMovie(s, null)));
+        // Hidrata cada película en background y va actualizando conforme llegan.
+        slugs.forEach((slug) => {
+          moviesService
+            .getBySlug(slug)
+            .then((d) => {
+              if (cancelled) return;
+              setFavorites((prev) =>
+                prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+              );
+            })
+            .catch(() => { /* ya hay placeholder */ });
+        });
       } catch {
         if (!cancelled) setFavorites([]);
       }
