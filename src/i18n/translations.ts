@@ -189,6 +189,10 @@ export const dict = {
   "users.empty.fav": { es: "Este usuario no tiene favoritos.", ca: "Aquest usuari no té preferits.", de: "Keine Favoriten.", fr: "Aucun favori." },
   "users.empty.watch": { es: "Watchlist vacía.", ca: "Llista buida.", de: "Merkliste leer.", fr: "Liste vide." },
   "users.empty.recent": { es: "Sin actividad reciente.", ca: "Sense activitat recent.", de: "Keine kürzliche Aktivität.", fr: "Pas d'activité récente." },
+  "users.follow": { es: "Seguir", ca: "Segueix", de: "Folgen", fr: "Suivre" },
+  "users.following": { es: "Siguiendo", ca: "Seguint", de: "Folgst du", fr: "Suivi" },
+  "users.viewProfile": { es: "Ver perfil", ca: "Veure perfil", de: "Profil ansehen", fr: "Voir profil" },
+  "users.profileOf": { es: "Perfil de", ca: "Perfil de", de: "Profil von", fr: "Profil de" },
 
   // Director
   "director.tag": { es: "Filmografía", ca: "Filmografia", de: "Filmografie", fr: "Filmographie" },
