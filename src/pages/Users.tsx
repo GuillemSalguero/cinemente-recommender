@@ -1,10 +1,27 @@
-import { useState } from "react";
-import { Users as UsersIcon, Search as SearchIcon, Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Users as UsersIcon, Search as SearchIcon, Loader2, UserPlus, UserCheck, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { friendsService, type BackendFriend } from "@/lib/backend";
+import { friendsService, moviesService, detailToMovie, type BackendFriend } from "@/lib/backend";
 import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import MovieCard from "@/components/movie/MovieCard";
+import MovieModal from "@/components/movie/MovieModal";
+import type { Movie } from "@/types/movie";
+
+const extractFavLinks = (favFilms: unknown): string[] => {
+  if (!favFilms) return [];
+  if (!Array.isArray(favFilms)) return [];
+  return favFilms
+    .map((it) => (typeof it === "string" ? it : (it as { movieLink?: string })?.movieLink))
+    .filter((s): s is string => Boolean(s));
+};
 
 const Users = () => {
   const { user: me } = useAuth();
@@ -13,6 +30,29 @@ const Users = () => {
   const [results, setResults] = useState<BackendFriend[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+
+  const [friendIds, setFriendIds] = useState<Set<number>>(new Set());
+  const [pendingFollow, setPendingFollow] = useState<Set<number>>(new Set());
+
+  // Profile popup state
+  const [openUser, setOpenUser] = useState<BackendFriend | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileFavs, setProfileFavs] = useState<Movie[]>([]);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+
+  const refreshFriends = useCallback(async () => {
+    if (!me?.id) return;
+    try {
+      const list = await friendsService.getFriends(me.id);
+      setFriendIds(new Set(list.map((f) => Number(f.id))));
+    } catch {
+      // silencioso
+    }
+  }, [me?.id]);
+
+  useEffect(() => {
+    refreshFriends();
+  }, [refreshFriends]);
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -32,6 +72,65 @@ const Users = () => {
       setResults([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleFollow = async (e: React.MouseEvent, u: BackendFriend) => {
+    e.stopPropagation();
+    if (!me?.id) return;
+    const id = Number(u.id);
+    const isFriend = friendIds.has(id);
+    setPendingFollow((s) => new Set(s).add(id));
+    try {
+      if (isFriend) {
+        await friendsService.removeFriend(me.id, id);
+        setFriendIds((s) => {
+          const n = new Set(s);
+          n.delete(id);
+          return n;
+        });
+      } else {
+        await friendsService.addFriend(me.id, id);
+        setFriendIds((s) => new Set(s).add(id));
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Acción no completada",
+        variant: "destructive",
+      });
+    } finally {
+      setPendingFollow((s) => {
+        const n = new Set(s);
+        n.delete(id);
+        return n;
+      });
+    }
+  };
+
+  const openProfile = async (u: BackendFriend) => {
+    setOpenUser(u);
+    setProfileFavs([]);
+    setProfileLoading(true);
+    try {
+      const full = await friendsService.getUser(u.id);
+      const links = extractFavLinks(full?.favFilms);
+      // Cargar detalles en paralelo (cacheados en moviesService)
+      const movies = await Promise.all(
+        links.map(async (slug) => {
+          const detail = await moviesService.getBySlug(slug);
+          return detailToMovie(slug, detail);
+        })
+      );
+      setProfileFavs(movies);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo cargar el perfil",
+        variant: "destructive",
+      });
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -92,23 +191,102 @@ const Users = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {results.map((u) => (
-              <div
-                key={u.id}
-                className="glass flex items-center gap-4 rounded-2xl p-4 text-left transition-all hover:border-primary/40 hover:bg-cinema-glass/80"
-              >
-                <div className="gradient-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-primary-foreground">
-                  {u.name[0]?.toUpperCase()}
+            {results.map((u) => {
+              const id = Number(u.id);
+              const isFriend = friendIds.has(id);
+              const isPending = pendingFollow.has(id);
+              return (
+                <div
+                  key={u.id}
+                  className="glass flex items-center gap-4 rounded-2xl p-4 text-left transition-all hover:border-primary/40 hover:bg-cinema-glass/80"
+                >
+                  <button
+                    onClick={() => openProfile(u)}
+                    className="flex min-w-0 flex-1 items-center gap-4 text-left"
+                    aria-label={t("users.viewProfile")}
+                  >
+                    <div className="gradient-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-primary-foreground">
+                      {u.name[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{u.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {t("users.viewProfile")}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => handleToggleFollow(e, u)}
+                    disabled={isPending}
+                    className={
+                      isFriend
+                        ? "flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-all hover:bg-primary/20 disabled:opacity-50"
+                        : "gradient-primary flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-all hover:opacity-90 disabled:opacity-50"
+                    }
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : isFriend ? (
+                      <UserCheck className="h-3.5 w-3.5" />
+                    ) : (
+                      <UserPlus className="h-3.5 w-3.5" />
+                    )}
+                    {isFriend ? t("users.following") : t("users.follow")}
+                  </button>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{u.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">ID: {u.id}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </motion.div>
+
+      {/* Profile popup */}
+      <Dialog open={!!openUser} onOpenChange={(o) => !o && setOpenUser(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="gradient-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold text-primary-foreground">
+                {openUser?.name?.[0]?.toUpperCase()}
+              </div>
+              <span>
+                {t("users.profileOf")} <span className="gradient-text">{openUser?.name}</span>
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Heart className="h-4 w-4 text-primary" />
+              <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("users.section.fav")}
+              </h3>
+            </div>
+
+            {profileLoading ? (
+              <div className="glass rounded-2xl p-12 text-center">
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : profileFavs.length === 0 ? (
+              <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+                {t("users.empty.fav")}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {profileFavs.map((m, i) => (
+                  <MovieCard
+                    key={m.link || m.title}
+                    movie={m}
+                    index={i}
+                    onClick={() => setSelectedMovie(m)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
     </div>
   );
 };
