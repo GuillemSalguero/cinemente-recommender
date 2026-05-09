@@ -115,24 +115,6 @@ const Users = () => {
     setProfileWatch([]);
     setProfileLoading(true);
 
-    const hydrate = (slugs: string[], setter: (m: Movie[]) => void) => {
-      // Pinta placeholders inmediatamente
-      const placeholders = slugs.map((s) => detailToMovie(s, null));
-      setter(placeholders);
-      // Hidrata en background
-      slugs.forEach((slug) => {
-        moviesService
-          .getBySlug(slug)
-          .then((d) => {
-            setter((prev: Movie[] | ((p: Movie[]) => Movie[])) => {
-              // useState setter trick: necesitamos acceder al estado previo via función
-              return prev as Movie[];
-            });
-          })
-          .catch(() => { /* noop */ });
-      });
-    };
-
     try {
       let favLinks: string[] = [];
       let watchLinks: string[] = [];
