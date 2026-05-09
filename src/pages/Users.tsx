@@ -31,6 +31,7 @@ const Users = () => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  const [friends, setFriends] = useState<BackendFriend[]>([]);
   const [friendIds, setFriendIds] = useState<Set<number>>(new Set());
   const [pendingFollow, setPendingFollow] = useState<Set<number>>(new Set());
 
