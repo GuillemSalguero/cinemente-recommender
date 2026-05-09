@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Users as UsersIcon, Search as SearchIcon, Loader2, UserPlus, UserCheck, Heart } from "lucide-react";
+import { Users as UsersIcon, Search as SearchIcon, Loader2, UserPlus, UserCheck, Heart, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendsService, moviesService, detailToMovie, type BackendFriend } from "@/lib/backend";
