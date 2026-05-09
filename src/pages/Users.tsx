@@ -298,7 +298,6 @@ const Users = () => {
             )}
           </section>
         )}
-        )}
       </motion.div>
 
       {/* Profile popup */}
