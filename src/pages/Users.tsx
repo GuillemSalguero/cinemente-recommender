@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Users as UsersIcon, Search as SearchIcon, Loader2, UserPlus, UserCheck, Heart } from "lucide-react";
+import { Users as UsersIcon, Search as SearchIcon, Loader2, UserPlus, UserCheck, Heart, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { friendsService, moviesService, detailToMovie, type BackendFriend } from "@/lib/backend";
@@ -38,6 +38,7 @@ const Users = () => {
   const [openUser, setOpenUser] = useState<BackendFriend | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileFavs, setProfileFavs] = useState<Movie[]>([]);
+  const [profileWatch, setProfileWatch] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   const refreshFriends = useCallback(async () => {
@@ -111,18 +112,49 @@ const Users = () => {
   const openProfile = async (u: BackendFriend) => {
     setOpenUser(u);
     setProfileFavs([]);
+    setProfileWatch([]);
     setProfileLoading(true);
+
     try {
-      const full = await friendsService.getUser(u.id);
-      const links = extractFavLinks(full?.favFilms);
-      // Cargar detalles en paralelo (cacheados en moviesService)
-      const movies = await Promise.all(
-        links.map(async (slug) => {
-          const detail = await moviesService.getBySlug(slug);
-          return detailToMovie(slug, detail);
-        })
-      );
-      setProfileFavs(movies);
+      let favLinks: string[] = [];
+      let watchLinks: string[] = [];
+      if (me?.id) {
+        try {
+          const data = await friendsService.getFriendMovies(me.id, u.id);
+          favLinks = data.favoriteMovies || [];
+          watchLinks = data.watchlist || [];
+        } catch {
+          // Fallback: si no es amigo aún, usa favFilms del propio user
+          const full = await friendsService.getUser(u.id);
+          favLinks = extractFavLinks(full?.favFilms);
+        }
+      }
+
+      // Placeholders inmediatos
+      setProfileFavs(favLinks.map((s) => detailToMovie(s, null)));
+      setProfileWatch(watchLinks.map((s) => detailToMovie(s, null)));
+
+      // Hidratación en background
+      favLinks.forEach((slug) => {
+        moviesService
+          .getBySlug(slug)
+          .then((d) =>
+            setProfileFavs((prev) =>
+              prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+            )
+          )
+          .catch(() => { /* noop */ });
+      });
+      watchLinks.forEach((slug) => {
+        moviesService
+          .getBySlug(slug)
+          .then((d) =>
+            setProfileWatch((prev) =>
+              prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+            )
+          )
+          .catch(() => { /* noop */ });
+      });
     } catch (err) {
       toast({
         title: "Error",
@@ -273,6 +305,36 @@ const Users = () => {
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {profileFavs.map((m, i) => (
+                  <MovieCard
+                    key={m.link || m.title}
+                    movie={m}
+                    index={i}
+                    onClick={() => setSelectedMovie(m)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Bookmark className="h-4 w-4 text-primary" />
+              <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("users.section.watch")}
+              </h3>
+            </div>
+
+            {profileLoading ? (
+              <div className="glass rounded-2xl p-12 text-center">
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : profileWatch.length === 0 ? (
+              <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+                {t("users.empty.watch")}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {profileWatch.map((m, i) => (
                   <MovieCard
                     key={m.link || m.title}
                     movie={m}
