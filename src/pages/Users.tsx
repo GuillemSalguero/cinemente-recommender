@@ -185,7 +185,7 @@ const Users = () => {
           aria-label={t("users.viewProfile")}
         >
           <div className="gradient-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-primary-foreground">
-            {u.name[0]?.toUpperCase()}
+            {u.name?.[0]?.toUpperCase() ?? "?"}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{u.name}</p>
