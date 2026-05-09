@@ -112,18 +112,67 @@ const Users = () => {
   const openProfile = async (u: BackendFriend) => {
     setOpenUser(u);
     setProfileFavs([]);
+    setProfileWatch([]);
     setProfileLoading(true);
+
+    const hydrate = (slugs: string[], setter: (m: Movie[]) => void) => {
+      // Pinta placeholders inmediatamente
+      const placeholders = slugs.map((s) => detailToMovie(s, null));
+      setter(placeholders);
+      // Hidrata en background
+      slugs.forEach((slug) => {
+        moviesService
+          .getBySlug(slug)
+          .then((d) => {
+            setter((prev: Movie[] | ((p: Movie[]) => Movie[])) => {
+              // useState setter trick: necesitamos acceder al estado previo via función
+              return prev as Movie[];
+            });
+          })
+          .catch(() => { /* noop */ });
+      });
+    };
+
     try {
-      const full = await friendsService.getUser(u.id);
-      const links = extractFavLinks(full?.favFilms);
-      // Cargar detalles en paralelo (cacheados en moviesService)
-      const movies = await Promise.all(
-        links.map(async (slug) => {
-          const detail = await moviesService.getBySlug(slug);
-          return detailToMovie(slug, detail);
-        })
-      );
-      setProfileFavs(movies);
+      let favLinks: string[] = [];
+      let watchLinks: string[] = [];
+      if (me?.id) {
+        try {
+          const data = await friendsService.getFriendMovies(me.id, u.id);
+          favLinks = data.favoriteMovies || [];
+          watchLinks = data.watchlist || [];
+        } catch {
+          // Fallback: si no es amigo aún, usa favFilms del propio user
+          const full = await friendsService.getUser(u.id);
+          favLinks = extractFavLinks(full?.favFilms);
+        }
+      }
+
+      // Placeholders inmediatos
+      setProfileFavs(favLinks.map((s) => detailToMovie(s, null)));
+      setProfileWatch(watchLinks.map((s) => detailToMovie(s, null)));
+
+      // Hidratación en background
+      favLinks.forEach((slug) => {
+        moviesService
+          .getBySlug(slug)
+          .then((d) =>
+            setProfileFavs((prev) =>
+              prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+            )
+          )
+          .catch(() => { /* noop */ });
+      });
+      watchLinks.forEach((slug) => {
+        moviesService
+          .getBySlug(slug)
+          .then((d) =>
+            setProfileWatch((prev) =>
+              prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+            )
+          )
+          .catch(() => { /* noop */ });
+      });
     } catch (err) {
       toast({
         title: "Error",
