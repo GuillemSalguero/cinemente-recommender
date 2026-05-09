@@ -92,9 +92,11 @@ const Users = () => {
           n.delete(id);
           return n;
         });
+        setFriends((list) => list.filter((f) => Number(f.id) !== id));
       } else {
         await friendsService.addFriend(me.id, id);
         setFriendIds((s) => new Set(s).add(id));
+        setFriends((list) => (list.some((f) => Number(f.id) === id) ? list : [...list, u]));
       }
     } catch (err) {
       toast({
