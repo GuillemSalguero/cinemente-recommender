@@ -45,7 +45,17 @@ const Users = () => {
   const refreshFriends = useCallback(async () => {
     if (!me?.id) return;
     try {
-      const list = await friendsService.getFriends(me.id);
+      const raw = await friendsService.getFriends(me.id);
+      // El back puede devolver entradas con shape distinta o nulls; normalizamos.
+      const list = (raw || [])
+        .map((f: any) => {
+          if (!f) return null;
+          // Si viene envuelto en { friend: {...} }, desempaquetar.
+          const inner = f.friend && typeof f.friend === "object" ? f.friend : f;
+          if (!inner?.id) return null;
+          return { id: Number(inner.id), name: inner.name ?? "?", favFilms: inner.favFilms } as BackendFriend;
+        })
+        .filter((x): x is BackendFriend => x !== null);
       setFriends(list);
       setFriendIds(new Set(list.map((f) => Number(f.id))));
     } catch {
