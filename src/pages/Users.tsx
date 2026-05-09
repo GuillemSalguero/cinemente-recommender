@@ -315,6 +315,36 @@ const Users = () => {
               </div>
             )}
           </div>
+
+          <div className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Bookmark className="h-4 w-4 text-primary" />
+              <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("users.section.watch")}
+              </h3>
+            </div>
+
+            {profileLoading ? (
+              <div className="glass rounded-2xl p-12 text-center">
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : profileWatch.length === 0 ? (
+              <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+                {t("users.empty.watch")}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {profileWatch.map((m, i) => (
+                  <MovieCard
+                    key={m.link || m.title}
+                    movie={m}
+                    index={i}
+                    onClick={() => setSelectedMovie(m)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
