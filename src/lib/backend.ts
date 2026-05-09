@@ -389,4 +389,22 @@ export const friendsService = {
     // ENDPOINT AQUI: DELETE {AUTH_API}/users/{id}/friends/{friendId}
     await authApi.delete<void>(`/users/${userId}/friends/${friendId}`);
   },
+  async getFriendMovies(
+    userId: number | string,
+    friendId: number | string
+  ): Promise<{ friendId: number; friendName: string; favoriteMovies: string[]; watchlist: string[] }> {
+    // ENDPOINT AQUI: GET {AUTH_API}/users/{id}/friends/{friendId}/movies
+    const data = await authApi.get<{
+      friendId: number;
+      friendName: string;
+      favoriteMovies: string[] | null;
+      watchlist: string[] | null;
+    }>(`/users/${userId}/friends/${friendId}/movies`);
+    return {
+      friendId: data?.friendId ?? Number(friendId),
+      friendName: data?.friendName ?? "",
+      favoriteMovies: data?.favoriteMovies ?? [],
+      watchlist: data?.watchlist ?? [],
+    };
+  },
 };
