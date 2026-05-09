@@ -46,6 +46,7 @@ const Users = () => {
     if (!me?.id) return;
     try {
       const list = await friendsService.getFriends(me.id);
+      setFriends(list);
       setFriendIds(new Set(list.map((f) => Number(f.id))));
     } catch {
       // silencioso
