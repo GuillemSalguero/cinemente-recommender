@@ -191,7 +191,9 @@ export const dict = {
   "users.empty.recent": { es: "Sin actividad reciente.", ca: "Sense activitat recent.", de: "Keine kürzliche Aktivität.", fr: "Pas d'activité récente." },
   "users.follow": { es: "Seguir", ca: "Segueix", de: "Folgen", fr: "Suivre" },
   "users.following": { es: "Siguiendo", ca: "Seguint", de: "Folgst du", fr: "Suivi" },
-  "users.viewProfile": { es: "Ver perfil", ca: "Veure perfil", de: "Profil ansehen", fr: "Voir profil" },
+ "users.viewProfile": { es: "Ver perfil", ca: "Veure perfil", de: "Profil ansehen", fr: "Voir profil" },
+ "users.myFriends": { es: "Mis amigos", ca: "Els meus amics", de: "Meine Freunde", fr: "Mes amis" },
+ "users.searchResults": { es: "Resultados", ca: "Resultats", de: "Ergebnisse", fr: "Résultats" },
   "users.profileOf": { es: "Perfil de", ca: "Perfil de", de: "Profil von", fr: "Profil de" },
 
   // Director
