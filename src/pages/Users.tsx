@@ -38,6 +38,7 @@ const Users = () => {
   const [openUser, setOpenUser] = useState<BackendFriend | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileFavs, setProfileFavs] = useState<Movie[]>([]);
+  const [profileWatch, setProfileWatch] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   const refreshFriends = useCallback(async () => {
