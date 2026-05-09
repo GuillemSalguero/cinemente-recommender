@@ -45,7 +45,17 @@ const Users = () => {
   const refreshFriends = useCallback(async () => {
     if (!me?.id) return;
     try {
-      const list = await friendsService.getFriends(me.id);
+      const raw = await friendsService.getFriends(me.id);
+      // El back puede devolver entradas con shape distinta o nulls; normalizamos.
+      const list = (raw || [])
+        .map((f: any) => {
+          if (!f) return null;
+          // Si viene envuelto en { friend: {...} }, desempaquetar.
+          const inner = f.friend && typeof f.friend === "object" ? f.friend : f;
+          if (!inner?.id) return null;
+          return { id: Number(inner.id), name: inner.name ?? "?", favFilms: inner.favFilms } as BackendFriend;
+        })
+        .filter((x): x is BackendFriend => x !== null);
       setFriends(list);
       setFriendIds(new Set(list.map((f) => Number(f.id))));
     } catch {
@@ -185,7 +195,7 @@ const Users = () => {
           aria-label={t("users.viewProfile")}
         >
           <div className="gradient-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-primary-foreground">
-            {u.name[0]?.toUpperCase()}
+            {u.name?.[0]?.toUpperCase() ?? "?"}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{u.name}</p>
