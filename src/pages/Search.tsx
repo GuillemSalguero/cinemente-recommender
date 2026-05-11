@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
-import { Search as SearchIcon, Filter, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search as SearchIcon, Filter, Loader2, Heart, X } from "lucide-react";
 import { motion } from "framer-motion";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import type { Movie } from "@/types/movie";
 import { useI18n } from "@/i18n/I18nContext";
 import { useClassicSearch } from "@/hooks/useClassicSearch";
+import { useFavoriteDirectors } from "@/hooks/useFavoriteDirectors";
+import { moviesByDirector } from "@/data/catalog";
+import { cn } from "@/lib/utils";
 
 const GENRES = [
   "Action", "Adventure", "Animation", "Comedy", "Crime",
@@ -18,13 +21,24 @@ const Search = () => {
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState("all");
   const [selected, setSelected] = useState<Movie | null>(null);
+  const [activeDirector, setActiveDirector] = useState<string | null>(null);
   const { movies, isLoading, hasSearched, search, loadMore, hasMore } = useClassicSearch();
+  const { directors, toggleDirector } = useFavoriteDirectors();
 
-  // Buscar al cambiar query o género con debounce
+  // Buscar al cambiar query o género con debounce (deshabilitado si filtramos por director)
   useEffect(() => {
+    if (activeDirector) return;
     const timer = setTimeout(() => search(query, genre), 400);
     return () => clearTimeout(timer);
-  }, [query, genre, search]);
+  }, [query, genre, search, activeDirector]);
+
+  // Películas del director activo (catálogo local).
+  const directorMovies = useMemo(
+    () => (activeDirector ? moviesByDirector(activeDirector) : []),
+    [activeDirector]
+  );
+
+  const visibleMovies = activeDirector ? directorMovies : movies;
 
   return (
     <div className="px-4 py-8 md:px-8">
