@@ -7,6 +7,7 @@ import { useHistory } from "@/hooks/useHistory";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { useReviews } from "@/hooks/useReviews";
+import { useFavoriteDirectors } from "@/hooks/useFavoriteDirectors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
   const { isFavorite, toggleFavorite } = useFavorites();
   const { inWatchlist, toggleWatchlist } = useWatchlist();
   const { getReview, saveReview, removeReview } = useReviews();
+  const { isDirectorFav, toggleDirector } = useFavoriteDirectors();
 
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -231,20 +233,41 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
               )}
             </div>
 
-            {/* Director chips (clickable) */}
+            {/* Director chips (clickable + like) */}
             {view.director && (
               <div className="flex flex-wrap gap-2">
                 {view.director.split(",").map((d) => {
                   const name = d.trim();
                   if (!name) return null;
+                  const liked = isDirectorFav(name);
                   return (
-                    <button
+                    <div
                       key={name}
-                      onClick={() => handleDirectorClick(name)}
-                      className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                      className="flex items-center overflow-hidden rounded-lg bg-secondary text-sm font-medium text-secondary-foreground"
                     >
-                      Dir. {name}
-                    </button>
+                      <button
+                        onClick={() => handleDirectorClick(name)}
+                        className="px-3 py-1.5 transition-colors hover:bg-primary hover:text-primary-foreground"
+                      >
+                        Dir. {name}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!user) return toast.error(t("modal.loginFav"));
+                          const added = toggleDirector(name);
+                          toast.success(added ? t("director.liked") : t("director.unliked"));
+                        }}
+                        aria-label={liked ? t("director.unlike") : t("director.like")}
+                        className={cn(
+                          "flex h-full items-center justify-center px-2.5 py-1.5 transition-colors",
+                          liked
+                            ? "bg-primary/20 text-primary"
+                            : "hover:bg-primary/10 hover:text-primary"
+                        )}
+                      >
+                        <Heart className={cn("h-3.5 w-3.5", liked && "fill-current")} />
+                      </button>
+                    </div>
                   );
                 })}
               </div>
