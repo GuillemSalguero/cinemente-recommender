@@ -86,25 +86,92 @@ const Search = () => {
           </div>
         </div>
 
-        {isLoading && (
+        {/* Mis directores favoritos */}
+        <div className="glass mb-6 rounded-2xl p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Heart className="h-4 w-4 text-primary" />
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              {t("director.myDirectors")}
+            </h2>
+          </div>
+          {directors.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t("director.empty.fav")}</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {directors.map((d) => {
+                const active = activeDirector === d;
+                return (
+                  <div
+                    key={d}
+                    className={cn(
+                      "flex items-center overflow-hidden rounded-full text-xs font-medium transition-colors",
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/70"
+                    )}
+                  >
+                    <button
+                      onClick={() => setActiveDirector(active ? null : d)}
+                      className="px-3 py-1.5"
+                    >
+                      {d}
+                    </button>
+                    <button
+                      onClick={() => toggleDirector(d)}
+                      aria-label={t("director.unlike")}
+                      className={cn(
+                        "flex h-full items-center px-2 py-1.5",
+                        active ? "hover:bg-primary/80" : "hover:bg-destructive/20 hover:text-destructive"
+                      )}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {activeDirector && (
+            <button
+              onClick={() => setActiveDirector(null)}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+              {t("director.clear")}
+            </button>
+          )}
+        </div>
+
+        {isLoading && !activeDirector && (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
 
-        {!isLoading && hasSearched && movies.length === 0 && (
+        {!isLoading && !activeDirector && hasSearched && movies.length === 0 && (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
             {t("search.noMatch")}
           </div>
         )}
 
-        {!isLoading && movies.length > 0 && (
+        {activeDirector && directorMovies.length === 0 && (
+          <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
+            {t("director.empty")}
+          </div>
+        )}
+
+        {((!isLoading && visibleMovies.length > 0)) && (
           <>
             <p className="mb-4 text-xs text-muted-foreground">
-              {movies.length} {movies.length === 1 ? t("common.result") : t("common.results")}
+              {activeDirector && (
+                <span className="mr-2 font-medium text-foreground">
+                  {t("director.viewing")} {activeDirector} —
+                </span>
+              )}
+              {visibleMovies.length} {visibleMovies.length === 1 ? t("common.result") : t("common.results")}
             </p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {movies.map((movie, i) => (
+              {visibleMovies.map((movie, i) => (
                 <MovieCard
                   key={movie.link || movie.title}
                   movie={movie}
@@ -113,7 +180,7 @@ const Search = () => {
                 />
               ))}
             </div>
-            {hasMore && (
+            {!activeDirector && hasMore && (
               <button
                 onClick={loadMore}
                 className="mx-auto mt-8 flex items-center gap-2 rounded-xl border border-border bg-secondary/50 px-5 py-3 text-sm font-medium hover:bg-secondary"
