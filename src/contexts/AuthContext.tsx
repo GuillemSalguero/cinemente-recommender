@@ -48,14 +48,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Restaurar sesión guardada (token + user). Solo si hay token válido en storage.
   useEffect(() => {
-    try {
-      const token = tokenStore.get();
-      const stored = localStorage.getItem(USER_KEY);
-      if (token && stored) setUser(JSON.parse(stored));
-    } catch {
-      /* noop */
-    }
-    setIsLoading(false);
+    const restore = async () => {
+      try {
+        const token = tokenStore.get();
+        const stored = localStorage.getItem(USER_KEY);
+        if (token && stored) {
+          // Restaurar sesión directamente sin validar — api.ts renueva el token
+          // automáticamente en la primera petición si está caducado
+          setUser(JSON.parse(stored));
+        }
+      } catch {
+        /* noop */
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    restore();
   }, []);
 
   const apply = (u: User | null) => {
@@ -65,11 +73,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (name: string, password: string) => {
     const res = await authService.login(name.trim(), password);
+    if (res.refreshToken) tokenStore.setRefresh(res.refreshToken); // 👈
     apply(fromBackend(res.user));
   };
 
   const register = async (name: string, password: string) => {
     const res = await authService.register(name.trim(), password);
+    if (res.refreshToken) tokenStore.setRefresh(res.refreshToken); // 👈
     apply(fromBackend(res.user));
   };
 
@@ -80,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     authService.logout();
+    tokenStore.clearRefresh(); // 👈
     apply(null);
   };
 

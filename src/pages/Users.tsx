@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+  import { useEffect, useState, useCallback } from "react";
 import { Users as UsersIcon, Search as SearchIcon, Loader2, UserPlus, UserCheck, Heart, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +24,7 @@ const extractFavLinks = (favFilms: unknown): string[] => {
 };
 
 const Users = () => {
-  const { user: me } = useAuth();
+  const { user: me, isLoading: authLoading } = useAuth();
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BackendFriend[]>([]);
@@ -46,26 +46,31 @@ const Users = () => {
     if (!me?.id) return;
     try {
       const raw = await friendsService.getFriends(me.id);
-      // El back puede devolver entradas con shape distinta o nulls; normalizamos.
+      
       const list = (raw || [])
         .map((f: any) => {
           if (!f) return null;
-          // Si viene envuelto en { friend: {...} }, desempaquetar.
           const inner = f.friend && typeof f.friend === "object" ? f.friend : f;
-          if (!inner?.id) return null;
-          return { id: Number(inner.id), name: inner.name ?? "?", favFilms: inner.favFilms } as BackendFriend;
+          
+          // Cubre ambos shapes: { id, name } y { friendId, friendName }
+          const id = inner.id ?? inner.friendId ?? f.friendId;
+          const name = inner.name ?? inner.friendName ?? f.friendName ?? "?";
+          
+          if (!id) return null;
+          return { id: Number(id), name, favFilms: inner.favFilms } as BackendFriend;
         })
         .filter((x): x is BackendFriend => x !== null);
+
       setFriends(list);
       setFriendIds(new Set(list.map((f) => Number(f.id))));
-    } catch {
-      // silencioso
+    } catch (err) {
+      console.error("refreshFriends error:", err); // quita el silencio para ver si falla
     }
   }, [me?.id]);
 
   useEffect(() => {
-    refreshFriends();
-  }, [refreshFriends]);
+    if (!authLoading) refreshFriends();
+  }, [refreshFriends, authLoading]);
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();

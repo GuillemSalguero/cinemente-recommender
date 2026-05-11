@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { I18nProvider } from "@/i18n/I18nContext";
 import AppLayout from "@/components/layout/AppLayout";
+import { UserListsProvider } from "@/contexts/UserListsContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
@@ -26,19 +27,21 @@ const App = () => (
       <BrowserRouter>
         <I18nProvider>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/buscar" element={<Search />} />
-              <Route path="/favoritos" element={<Favorites />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/usuarios" element={<Users />} />
-              <Route path="/perfil" element={<Profile />} />
-              <Route path="/director/:name" element={<Director />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <UserListsProvider>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/buscar" element={<Search />} />
+                <Route path="/favoritos" element={<Favorites />} />
+                <Route path="/watchlist" element={<Watchlist />} />
+                <Route path="/usuarios" element={<Users />} />
+                <Route path="/perfil" element={<Profile />} />
+                <Route path="/director/:name" element={<Director />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserListsProvider>
         </AuthProvider>
         </I18nProvider>
       </BrowserRouter>

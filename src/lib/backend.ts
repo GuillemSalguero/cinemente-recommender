@@ -12,6 +12,7 @@ export interface BackendUser {
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
   tokenType: string;
   expiresIn: number;
   user: BackendUser;
@@ -151,11 +152,11 @@ export function mapRecoResult(r: RecoResult): Movie {
 }
 
 export const recoService = {
-  async recommend(query: string, lang?: string): Promise<Movie[]> {
+  async recommend(query: string, lang?: string, max_results: number = 12): Promise<Movie[]> {
     // ENDPOINT AQUI: POST {RECO_API}/recommend   body: { query, lang }
     const data = await recoApi.post<RecoResponse>(
       "/recommend",
-      { query, lang },
+      { query, lang, max_results: 12 },
       { auth: true } // se enviará bearer si existe; ignorado si no
     );
     return (data.results || []).map(mapRecoResult);
@@ -338,9 +339,10 @@ export const userMoviesService = {
     const data = await authApi.post<any>("/movies/reviews/public", { movieLink });
     return extractList(data);
   },
-  async getReviews(): Promise<BackendReview[]> {
+  async getReviews(movieLink: string): Promise<BackendReview[]> {
     // ENDPOINT AQUI: GET {AUTH_API}/movies/reviews  → BackendReview[]
-    return extractList(await authApi.get<BackendReview[] | { items?: BackendReview[] }>("/movies/reviews"));
+    //return extractList(await authApi.get<BackendReview[] | { items?: BackendReview[] }>("/movies/reviews"));
+    return extractList(await authApi.post<BackendReview[] | { items?: BackendReview[] }>("/movies/SearchReviews", { movieLink }));
   },
   async createReview(movieLink: string, rating: number, reviewText: string): Promise<void> {
     // ENDPOINT AQUI: POST {AUTH_API}/movies/reviews  body: { movieLink, rating, reviewText }

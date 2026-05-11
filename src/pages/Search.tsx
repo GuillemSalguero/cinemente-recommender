@@ -1,34 +1,30 @@
-import { useMemo, useState } from "react";
-import { Search as SearchIcon, Filter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search as SearchIcon, Filter, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import type { Movie } from "@/types/movie";
-import { CATALOG } from "@/data/catalog";
 import { useI18n } from "@/i18n/I18nContext";
+import { useClassicSearch } from "@/hooks/useClassicSearch";
 
-const ALL_GENRES = Array.from(
-  new Set(CATALOG.flatMap((m) => m.genre.split(",").map((g) => g.trim())))
-).sort();
+const GENRES = [
+  "Action", "Adventure", "Animation", "Comedy", "Crime",
+  "Documentary", "Drama", "Fantasy", "Horror", "Music",
+  "Mystery", "Romance", "Science Fiction", "Thriller", "Western"
+];
 
 const Search = () => {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState<string>("all");
+  const [genre, setGenre] = useState("all");
   const [selected, setSelected] = useState<Movie | null>(null);
+  const { movies, isLoading, hasSearched, search, loadMore, hasMore } = useClassicSearch();
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return CATALOG.filter((m) => {
-      const matchQ =
-        !q ||
-        m.title.toLowerCase().includes(q) ||
-        m.director.toLowerCase().includes(q) ||
-        m.description.toLowerCase().includes(q);
-      const matchG = genre === "all" || m.genre.toLowerCase().includes(genre.toLowerCase());
-      return matchQ && matchG;
-    });
-  }, [query, genre]);
+  // Buscar al cambiar query o género con debounce
+  useEffect(() => {
+    const timer = setTimeout(() => search(query, genre), 400);
+    return () => clearTimeout(timer);
+  }, [query, genre, search]);
 
   return (
     <div className="px-4 py-8 md:px-8">
@@ -47,9 +43,7 @@ const Search = () => {
           <h1 className="font-display text-3xl font-bold md:text-4xl">
             {t("search.titlePrefix")} <span className="gradient-text">{t("search.title")}</span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("search.subtitle")}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("search.subtitle")}</p>
         </header>
 
         <div className="glass mb-6 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row">
@@ -71,34 +65,49 @@ const Search = () => {
               className="w-full appearance-none rounded-xl border border-border bg-background/50 py-3 pl-10 pr-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">{t("search.allGenres")}</option>
-              {ALL_GENRES.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
+              {GENRES.map((g) => (
+                <option key={g} value={g}>{g}</option>
               ))}
             </select>
           </div>
         </div>
 
-        <p className="mb-4 text-xs text-muted-foreground">
-          {results.length} {results.length === 1 ? t("common.result") : t("common.results")}
-        </p>
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
 
-        {results.length === 0 ? (
+        {!isLoading && hasSearched && movies.length === 0 && (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
             {t("search.noMatch")}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {results.map((movie, i) => (
-              <MovieCard
-                key={movie.title}
-                movie={movie}
-                index={i}
-                onClick={() => setSelected(movie)}
-              />
-            ))}
-          </div>
+        )}
+
+        {!isLoading && movies.length > 0 && (
+          <>
+            <p className="mb-4 text-xs text-muted-foreground">
+              {movies.length} {movies.length === 1 ? t("common.result") : t("common.results")}
+            </p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              {movies.map((movie, i) => (
+                <MovieCard
+                  key={movie.link || movie.title}
+                  movie={movie}
+                  index={i}
+                  onClick={() => setSelected(movie)}
+                />
+              ))}
+            </div>
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                className="mx-auto mt-8 flex items-center gap-2 rounded-xl border border-border bg-secondary/50 px-5 py-3 text-sm font-medium hover:bg-secondary"
+              >
+                {t("common.loadMore")}
+              </button>
+            )}
+          </>
         )}
       </motion.div>
 

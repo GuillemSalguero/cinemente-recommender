@@ -12,6 +12,7 @@ import {
   Trash2,
   History as HistoryIcon,
 } from "lucide-react";
+import { useUserLists } from "@/contexts/UserListsContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,8 +27,7 @@ import { useI18n, localeFor } from "@/i18n/I18nContext";
 
 const Profile = () => {
   const { user, updateProfile, logout } = useAuth();
-  const { favorites, removeFavorite } = useFavorites();
-  const { watchlist, removeFromWatchlist } = useWatchlist();
+  const { favorites, watchlist, removeFavorite, removeWatchlist } = useUserLists();
   const { lastMonth, clearHistory } = useHistory();
   const navigate = useNavigate();
   const { t, lang } = useI18n();
@@ -252,7 +252,7 @@ const Profile = () => {
           <TabsContent value="watchlist" className="mt-6">
             {renderRemovableGrid(
               watchlist,
-              removeFromWatchlist,
+              removeWatchlist,
               t("watch.empty"),
               <Bookmark className="h-10 w-10" />
             )}
