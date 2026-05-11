@@ -410,3 +410,44 @@ export const friendsService = {
     };
   },
 };
+
+// ============== Directores favoritos (STUB) ==============
+// TODO: cuando estén los endpoints reales, sustituir el cuerpo de cada función por
+//   GET    {AUTH_API}/directors/favorites              -> string[]
+//   POST   {AUTH_API}/directors/favorites  { name }
+//   DELETE {AUTH_API}/directors/favorites  { name }
+// La firma pública (Promise<string[]> / Promise<void>) ya está pensada para no
+// tener que tocar el hook useFavoriteDirectors al cambiar al backend real.
+
+const FAV_DIRECTORS_KEY = "cinemente_fav_directors_v1";
+
+const readDirectorsLocal = (): string[] => {
+  try {
+    const raw = localStorage.getItem(FAV_DIRECTORS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeDirectorsLocal = (list: string[]) => {
+  try {
+    localStorage.setItem(FAV_DIRECTORS_KEY, JSON.stringify(list));
+  } catch { /* noop */ }
+};
+
+export const directorsService = {
+  async getFavorites(): Promise<string[]> {
+    return readDirectorsLocal();
+  },
+  async addFavorite(name: string): Promise<void> {
+    const clean = name.trim();
+    if (!clean) return;
+    const list = readDirectorsLocal();
+    if (!list.includes(clean)) writeDirectorsLocal([...list, clean]);
+  },
+  async removeFavorite(name: string): Promise<void> {
+    const clean = name.trim();
+    writeDirectorsLocal(readDirectorsLocal().filter((d) => d !== clean));
+  },
+};
