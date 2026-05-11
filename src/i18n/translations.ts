@@ -206,6 +206,14 @@ export const dict = {
     de: "Noch keine Filme dieses Regisseurs.",
     fr: "Aucun film de ce réalisateur pour le moment.",
   },
+  "director.like": { es: "Seguir director", ca: "Segueix el director", de: "Regisseur folgen", fr: "Suivre le réalisateur" },
+  "director.unlike": { es: "Dejar de seguir", ca: "Deixa de seguir", de: "Nicht mehr folgen", fr: "Ne plus suivre" },
+  "director.liked": { es: "Director añadido", ca: "Director afegit", de: "Regisseur hinzugefügt", fr: "Réalisateur ajouté" },
+  "director.unliked": { es: "Director eliminado", ca: "Director eliminat", de: "Regisseur entfernt", fr: "Réalisateur supprimé" },
+  "director.myDirectors": { es: "Mis directores", ca: "Els meus directors", de: "Meine Regisseure", fr: "Mes réalisateurs" },
+  "director.viewing": { es: "Películas de", ca: "Pel·lícules de", de: "Filme von", fr: "Films de" },
+  "director.clear": { es: "Quitar filtro", ca: "Treu el filtre", de: "Filter entfernen", fr: "Retirer le filtre" },
+  "director.empty.fav": { es: "Aún no sigues a ningún director. Pulsa el corazón en el chip de un director.", ca: "Encara no segueixes cap director. Prem el cor al xip d'un director.", de: "Du folgst noch keinem Regisseur. Drücke das Herz auf einem Regisseur-Chip.", fr: "Tu ne suis encore aucun réalisateur. Appuie sur le cœur d'un chip de réalisateur." },
 
   // Auth page
   "auth.tag": { es: "Tu cinemateca personal", ca: "La teva cinemateca", de: "Deine Cinemathek", fr: "Ta cinémathèque" },
