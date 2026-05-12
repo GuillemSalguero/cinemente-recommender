@@ -3,6 +3,13 @@ import { motion } from "framer-motion";
 import { Search, Loader2, Sparkles, Cpu } from "lucide-react";
 import { useI18n } from "@/i18n/I18nContext";
 import { RECO_ALGORITHMS, type RecoAlgorithm } from "@/lib/backend";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SearchHeroProps {
   onSearch: (query: string, algorithm?: RecoAlgorithm) => void;
@@ -84,21 +91,29 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
         </div>
 
         <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <label className="glass flex items-center gap-2 rounded-xl px-3 py-2 text-xs">
-            <Cpu className="h-3.5 w-3.5 text-primary" />
-            <span className="text-muted-foreground">{t("hero.algorithm")}</span>
-            <select
+          <div className="glass flex items-center gap-2 rounded-xl px-3 py-1.5">
+            <Cpu className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <span className="text-xs text-muted-foreground">{t("hero.algorithm")}</span>
+            <Select
               value={algorithm}
-              onChange={(e) => setAlgorithm(e.target.value as "default" | RecoAlgorithm)}
+              onValueChange={(v) => setAlgorithm(v as "default" | RecoAlgorithm)}
               disabled={isLoading}
-              className="bg-transparent text-foreground focus:outline-none"
             >
-              <option value="default">{t("hero.algoDefault")}</option>
-              {RECO_ALGORITHMS.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
-          </label>
+              <SelectTrigger className="h-8 w-auto min-w-[8rem] gap-2 border-0 bg-transparent px-2 text-xs font-medium text-foreground shadow-none focus:ring-0 focus:ring-offset-0 hover:text-primary">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="glass border-border/50">
+                <SelectItem value="default" className="text-xs">
+                  {t("hero.algoDefault")}
+                </SelectItem>
+                {RECO_ALGORITHMS.map((a) => (
+                  <SelectItem key={a} value={a} className="text-xs font-mono">
+                    {a}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <button
             type="submit"
