@@ -242,10 +242,9 @@ const Profile = () => {
                       <img
                         src={avatar.realUrl}
                         alt={avatar.label}
-                        className="h-16 w-16 rounded-full object-cover ring-2 transition-all group-hover:ring-primary"
-                        style={{
-                          ringColor: avatarId === avatar.id ? "var(--primary)" : "transparent",
-                        }}
+                        className={`h-16 w-16 rounded-full object-cover ring-2 transition-all group-hover:ring-primary ${
+                          avatarId === avatar.id ? "ring-primary" : "ring-transparent"
+                        }`}
                       />
                       {avatarId === avatar.id && (
                         <div className="absolute inset-0 flex items-center justify-center rounded-full bg-primary/40">
