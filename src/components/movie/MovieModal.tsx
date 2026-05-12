@@ -236,8 +236,9 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
             {/* Director chips (clickable + like) */}
             {view.director && (
               <div className="flex flex-wrap gap-2">
-                {view.director.split(",").map((d) => {
-                  const name = d.trim();
+                {/* Convertimos a array siempre, sin importar si viene como string o array de la API */}
+                {(Array.isArray(view.director) ? view.director : view.director.split(",")).map((d) => {
+                  const name = typeof d === 'string' ? d.trim() : String(d);
                   if (!name) return null;
                   const liked = isDirectorFav(name);
                   return (
