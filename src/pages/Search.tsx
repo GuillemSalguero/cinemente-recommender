@@ -7,13 +7,13 @@ import type { Movie } from "@/types/movie";
 import { useI18n } from "@/i18n/I18nContext";
 import { useClassicSearch } from "@/hooks/useClassicSearch";
 import { useFavoriteDirectors } from "@/hooks/useFavoriteDirectors";
-import { moviesByDirector } from "@/data/catalog";
 import { cn } from "@/lib/utils";
+import { authApi } from "@/lib/api"; // 👈 eliminado moviesByDirector, añadido authApi
 
 const GENRES = [
   "Action", "Adventure", "Animation", "Comedy", "Crime",
   "Documentary", "Drama", "Fantasy", "Horror", "Music",
-  "Mystery", "Romance", "Science Fiction", "Thriller", "Western"
+  "Mystery", "Mystery", "Romance", "Science Fiction", "Thriller", "Western"
 ];
 
 const Search = () => {
@@ -22,6 +22,8 @@ const Search = () => {
   const [genre, setGenre] = useState("all");
   const [selected, setSelected] = useState<Movie | null>(null);
   const [activeDirector, setActiveDirector] = useState<string | null>(null);
+  const [directorMovies, setDirectorMovies] = useState<Movie[]>([]);
+  const [directorLoading, setDirectorLoading] = useState(false);
   const { movies, isLoading, hasSearched, search, loadMore, hasMore } = useClassicSearch();
   const { directors, toggleDirector } = useFavoriteDirectors();
 
@@ -32,13 +34,42 @@ const Search = () => {
     return () => clearTimeout(timer);
   }, [query, genre, search, activeDirector]);
 
-  // Películas del director activo (catálogo local).
-  const directorMovies = useMemo(
-    () => (activeDirector ? moviesByDirector(activeDirector) : []),
-    [activeDirector]
-  );
+  // Películas del director activo desde el backend
+  useEffect(() => {
+    if (!activeDirector) {
+      setDirectorMovies([]);
+      return;
+    }
+    const fetchDirectorMovies = async () => {
+      setDirectorLoading(true);
+      try {
+        const data = await authApi.get<Movie[]>(
+          `/directors/${encodeURIComponent(activeDirector)}/movies`
+        );
+        const raw = Array.isArray(data) ? data : [];
+          setDirectorMovies(raw.map((m: any) => ({
+            title: m.movieTitle || m.title || "",
+            year: m.originalReleaseDate ? m.originalReleaseDate.split('-')[0] : m.year || "N/A",
+            director: m.directors || m.director || activeDirector,
+            tomatometer: m.tomatometerRating || m.tomatometer || 0,
+            posterUrl: m.poster_url || m.posterUrl || "",
+            description: m.movieInfo || m.criticsConsensus || "",
+            genre: m.genres || m.genre || "",
+            runtime: m.runtime || 0,
+            reason: "",
+            link: m.rottenTomatoesLink || m.link || "",
+          })));
+      } catch {
+        setDirectorMovies([]);
+      } finally {
+        setDirectorLoading(false);
+      }
+    };
+    fetchDirectorMovies();
+  }, [activeDirector]);
 
   const visibleMovies = activeDirector ? directorMovies : movies;
+  const isLoadingAny = activeDirector ? directorLoading : isLoading;
 
   return (
     <div className="px-4 py-8 md:px-8">
@@ -142,25 +173,25 @@ const Search = () => {
           )}
         </div>
 
-        {isLoading && !activeDirector && (
+        {isLoadingAny && (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
 
-        {!isLoading && !activeDirector && hasSearched && movies.length === 0 && (
+        {!isLoadingAny && !activeDirector && hasSearched && movies.length === 0 && (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
             {t("search.noMatch")}
           </div>
         )}
 
-        {activeDirector && directorMovies.length === 0 && (
+        {!isLoadingAny && activeDirector && directorMovies.length === 0 && (
           <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
             {t("director.empty")}
           </div>
         )}
 
-        {((!isLoading && visibleMovies.length > 0)) && (
+        {!isLoadingAny && visibleMovies.length > 0 && (
           <>
             <p className="mb-4 text-xs text-muted-foreground">
               {activeDirector && (

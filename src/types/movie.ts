@@ -19,7 +19,7 @@ export interface Movie {
   genre: string;
   description: string;
   reason: string;
-  poster_url: string;
+  posterUrl: string;
   director: string;
   runtime: number;
   tomatometer: number;

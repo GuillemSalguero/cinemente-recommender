@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { Movie } from "@/types/movie";
 import { useAuth } from "@/contexts/AuthContext";
-import { userMoviesService, moviesService, detailToMovie } from "@/lib/backend";
+import { userMoviesService, moviesService, detailToMovie, mergeDetail } from "@/lib/backend";
 
 /**
  * Favoritos sincronizados con el backend.
@@ -40,7 +40,7 @@ export function useFavorites() {
             .then((d) => {
               if (cancelled) return;
               setFavorites((prev) =>
-                prev.map((m) => (m.link === slug ? detailToMovie(slug, d) : m))
+                prev.map((m) => (m.link === slug ? mergeDetail(m, d) : m))
               );
             })
             .catch(() => { /* ya hay placeholder */ });

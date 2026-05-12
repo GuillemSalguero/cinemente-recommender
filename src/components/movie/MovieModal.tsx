@@ -151,9 +151,9 @@ const MovieModal = ({ movie, onClose, showReason = false }: MovieModalProps) => 
 
           {/* Hero */}
           <div className="relative h-72 md:h-96 overflow-hidden rounded-t-2xl">
-            {view.poster_url ? (
+            {view.posterUrl ? (
               <img
-                src={view.poster_url}
+                src={view.posterUrl}
                 alt={view.title}
                 className="h-full w-full object-cover"
               />

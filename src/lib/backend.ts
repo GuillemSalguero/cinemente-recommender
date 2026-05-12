@@ -38,7 +38,7 @@ export interface RecoResult {
   streaming_availability: BackendStreamingPlatform[] | null;
   link: string;
   /** Póster directo (TMDB u otro) que ya viene en la respuesta del recomendador. */
-  poster?: string | null;
+  posterUrl?: string | null;
 }
 
 export interface RecoResponse {
@@ -69,8 +69,7 @@ export interface MovieDetail {
   audienceCount?: number;
   tomatometerFreshCriticsCount?: number;
   // campos opcionales que algún backend podría añadir
-  poster_url?: string;
-  poster?: string;
+  posterUrl?: string;
   streaming_availability?: BackendStreamingPlatform[] | null;
   platforms?: StreamingPlatform[] | null;
 }
@@ -136,13 +135,14 @@ export function mapPlatforms(
 
 export function mapRecoResult(r: RecoResult): Movie {
   const reason = (r.snippets && r.snippets[0]) || "";
+
   return {
     title: titleFromSlug(r.title || r.link),
     year: r.year || "",
     genre: r.genres || "",
     description: "", // se rellena al abrir el modal con el detalle
     reason,
-    poster_url: r.poster || "",
+    posterUrl: r.posterUrl || "",
     director: r.directors || "",
     runtime: r.runtime || 0,
     tomatometer: r.signals?.tomatometer ?? 0,
@@ -264,26 +264,40 @@ export function mergeDetail(base: Movie, detail: MovieDetail | null): Movie {
     runtime: detail.runtime ?? base.runtime,
     tomatometer: detail.tomatometerRating ?? base.tomatometer,
     description: detail.movieInfo || detail.criticsConsensus || base.description,
-    poster_url: detail.poster_url || detail.poster || base.poster_url,
+    posterUrl: detail.posterUrl || base.posterUrl,
     platforms: detailPlatforms ?? base.platforms ?? undefined,
   };
 }
 
-/** Crea un Movie mínimo a partir de un slug + (opcional) detalle del back. */
 export function detailToMovie(slug: string, detail: MovieDetail | null): Movie {
+  // 1. Estado inicial (mientras carga o si falla)
   const base: Movie = {
     title: titleFromSlug(slug),
     year: "",
     genre: "",
     description: "",
     reason: "",
-    poster_url: "",
+    posterUrl: "",
     director: "",
     runtime: 0,
     tomatometer: 0,
     link: slug,
   };
-  return mergeDetail(base, detail);
+
+  if (!detail) return base;
+
+  // 2. Mapeo forzado (Traductor API -> App)
+  return {
+    ...base,
+    title: detail.movieTitle || base.title,
+    year: detail.originalReleaseDate ? detail.originalReleaseDate.split('-')[0] : "",
+    director: detail.directors || "",
+    genre: detail.genres || "",
+    description: detail.movieInfo || "",
+    tomatometer: detail.tomatometerRating || 0,
+    runtime: detail.runtime || 0,
+    posterUrl: detail.posterUrl || base.posterUrl,
+  };
 }
 
 // ============== Watchlist / Favorites / Reviews ==============
@@ -419,35 +433,21 @@ export const friendsService = {
 // La firma pública (Promise<string[]> / Promise<void>) ya está pensada para no
 // tener que tocar el hook useFavoriteDirectors al cambiar al backend real.
 
-const FAV_DIRECTORS_KEY = "cinemente_fav_directors_v1";
-
-const readDirectorsLocal = (): string[] => {
-  try {
-    const raw = localStorage.getItem(FAV_DIRECTORS_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeDirectorsLocal = (list: string[]) => {
-  try {
-    localStorage.setItem(FAV_DIRECTORS_KEY, JSON.stringify(list));
-  } catch { /* noop */ }
-};
-
 export const directorsService = {
   async getFavorites(): Promise<string[]> {
-    return readDirectorsLocal();
+    const data = await authApi.get<{ userId: number; directors: string[] }>("/directors/favorites");
+    return data?.directors ?? [];
   },
+
   async addFavorite(name: string): Promise<void> {
     const clean = name.trim();
     if (!clean) return;
-    const list = readDirectorsLocal();
-    if (!list.includes(clean)) writeDirectorsLocal([...list, clean]);
+    await authApi.post<void>("/directors/like", { directorName: clean });
   },
+
   async removeFavorite(name: string): Promise<void> {
     const clean = name.trim();
-    writeDirectorsLocal(readDirectorsLocal().filter((d) => d !== clean));
+    if (!clean) return;
+    await authApi.delete<void>("/directors/like", { directorName: clean });
   },
 };

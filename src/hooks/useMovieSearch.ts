@@ -23,7 +23,7 @@ export function useMovieSearch() {
         const results = await recoService.recommend(query.trim(), lang);
         const capped = results.slice(0, MAX);
         setAllResults(capped);
-        // Mostrar las 4 primeras (desktop) y dejar el resto para "load more".
+        // Mostrar las 4 primeras (desktop) y desejar el resto para "load more".
         setMovies(capped.slice(0, 4));
       } catch (e) {
         console.error("[search] error", e);
