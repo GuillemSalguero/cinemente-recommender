@@ -18,7 +18,7 @@ export interface Review {
  */
 type ReviewMap = Record<string, Review>;
 
-export function useReviews() {
+export function useReviews(movieLink?: string) {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<ReviewMap>({});
 
@@ -30,7 +30,7 @@ export function useReviews() {
     let cancelled = false;
     (async () => {
       try {
-        const list = await userMoviesService.getReviews();
+        const list = await userMoviesService.getReviews(movieLink);
         if (cancelled) return;
         const map: ReviewMap = {};
         for (const r of list) {
@@ -49,7 +49,7 @@ export function useReviews() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, movieLink]);
 
   const getReview = useCallback(
     (key: string): Review | undefined => reviews[key],

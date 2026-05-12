@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   User as UserIcon,
   Mail,
@@ -11,19 +11,80 @@ import {
   Search as SearchIcon,
   Trash2,
   History as HistoryIcon,
+  Camera,
+  Check,
 } from "lucide-react";
 import { useUserLists } from "@/contexts/UserListsContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFavorites } from "@/hooks/useFavorites";
-import { useWatchlist } from "@/hooks/useWatchlist";
 import { useHistory } from "@/hooks/useHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MovieCard from "@/components/movie/MovieCard";
 import MovieModal from "@/components/movie/MovieModal";
 import type { Movie } from "@/types/movie";
 import { useI18n, localeFor } from "@/i18n/I18nContext";
+
+const AVATAR_OPTIONS = [
+  {
+    id: "poño",
+    label: "poño",
+    realUrl: "https://m.supergeek.cl/noticias/site/artic/20210714/imag/foto_0000000220210714190012/PONYO_GHIBLI.jpg",
+  },
+  {
+    id: "fight-club",
+    label: "Fight Club",
+    realUrl: "https://core-cms.bfi.org.uk/sites/default/files/styles/responsive/public/2021-02/fight-club-1999-brad-pitt-red-leather-jacket.jpg/600x0/fight-club-1999-brad-pitt-red-leather-jacket.jpg",
+  },
+  {
+    id: "the-dude",
+    label: "The Dude",
+    realUrl: "https://media.gq-magazine.co.uk/photos/5d13a04bb744d364a425653b/16:9/w_2560%2Cc_limit/The-Big-Lebowski-hp-GQ-25Feb16_rex_b.jpg",
+  },
+  {
+    id: "godfather",
+    label: "El Padrino",
+    realUrl: "https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_.jpg",
+  },
+  {
+    id : "4",
+    label: "Pulp Fiction",
+    realUrl: "https://cdn.zendalibros.com/wp-content/uploads/2025/10/pelicula-pulp-fiction.jpg",
+  },
+  {
+    id: "5",
+    label: "Todo sobre mi madre",
+    realUrl: "https://i.pinimg.com/736x/15/8f/ec/158fecfffaec07956f82317b3a7076dd.jpg",
+  },
+  {
+    id: "6",
+    label: "No Country for Old Men",
+    realUrl: "https://occ-0-8407-2219.1.nflxso.net/dnm/api/v6/E8vDc_W8CLv7-yMQu8KMEC7Rrr8/AAAABYkY6oNKD8CWYger22NQpx3lQ_5OylmOoYMWI7zT6SvRBMoWDyfQPxi9hu0NPm5n2ONuD19K1dHrAFtu-DfJHV6_eJNxqKxJlJdw.jpg?r=124",
+  },
+  {
+    id: "7",
+    label: "Casino Royale",
+    realUrl: "https://decider.com/wp-content/uploads/2025/11/Casino-THROWBACK.jpg?quality=75&strip=all&w=978&h=652&crop=1",
+  }
+
+];
+
+const AVATAR_STORAGE_KEY = "cinemente_avatar";
+
+function useAvatar() {
+  const [avatarId, setAvatarId] = useState<string>(
+    () => localStorage.getItem(AVATAR_STORAGE_KEY) || ""
+  );
+
+  const setAvatar = (id: string) => {
+    localStorage.setItem(AVATAR_STORAGE_KEY, id);
+    setAvatarId(id);
+  };
+
+  const currentAvatar = AVATAR_OPTIONS.find((a) => a.id === avatarId) || null;
+
+  return { avatarId, currentAvatar, setAvatar };
+}
 
 const Profile = () => {
   const { user, updateProfile, logout } = useAuth();
@@ -33,6 +94,8 @@ const Profile = () => {
   const { t, lang } = useI18n();
   const [name, setName] = useState(user?.name || "");
   const [selected, setSelected] = useState<Movie | null>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const { avatarId, currentAvatar, setAvatar } = useAvatar();
 
   if (!user) {
     return (
@@ -121,9 +184,28 @@ const Profile = () => {
 
         {/* Avatar + meta */}
         <div className="glass mb-6 flex items-center gap-4 rounded-2xl p-6">
-          <div className="gradient-primary flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-2xl font-bold text-primary-foreground">
-            {user.name[0]?.toUpperCase()}
+          {/* Avatar con botón editar */}
+          <div className="relative shrink-0">
+            {currentAvatar ? (
+              <img
+                src={currentAvatar.realUrl}
+                alt={currentAvatar.label}
+                className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/40"
+              />
+            ) : (
+              <div className="gradient-primary flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-primary-foreground">
+                {user.name[0]?.toUpperCase()}
+              </div>
+            )}
+            <button
+              onClick={() => setShowAvatarPicker((v) => !v)}
+              className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:opacity-90"
+              aria-label="Cambiar foto"
+            >
+              <Camera className="h-3 w-3" />
+            </button>
           </div>
+
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-lg font-semibold">{user.name}</p>
             <p className="truncate text-sm text-muted-foreground">{user.email}</p>
@@ -133,7 +215,67 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Square tabs */}
+        {/* Avatar picker */}
+        <AnimatePresence>
+          {showAvatarPicker && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="glass mb-6 rounded-2xl p-4"
+            >
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Elige tu foto de perfil
+              </p>
+              <div className="grid grid-cols-4 gap-3">
+                {AVATAR_OPTIONS.map((avatar) => (
+                  <button
+                    key={avatar.id}
+                    onClick={() => {
+                      setAvatar(avatar.id);
+                      setShowAvatarPicker(false);
+                      toast.success("Foto actualizada");
+                    }}
+                    className="group relative flex flex-col items-center gap-1.5"
+                  >
+                    <div className="relative">
+                      <img
+                        src={avatar.realUrl}
+                        alt={avatar.label}
+                        className="h-16 w-16 rounded-full object-cover ring-2 transition-all group-hover:ring-primary"
+                        style={{
+                          ringColor: avatarId === avatar.id ? "var(--primary)" : "transparent",
+                        }}
+                      />
+                      {avatarId === avatar.id && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-primary/40">
+                          <Check className="h-5 w-5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-center text-[10px] text-muted-foreground">
+                      {avatar.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {avatarId && (
+                <button
+                  onClick={() => {
+                    setAvatar("");
+                    setShowAvatarPicker(false);
+                    toast.success("Foto eliminada");
+                  }}
+                  className="mt-3 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Quitar foto
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tabs */}
         <Tabs defaultValue="info" className="w-full">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5">
             <TabsTrigger
@@ -258,7 +400,7 @@ const Profile = () => {
             )}
           </TabsContent>
 
-          {/* History (last 30 days) */}
+          {/* History */}
           <TabsContent value="history" className="mt-6">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
@@ -280,9 +422,7 @@ const Profile = () => {
             {lastMonth.length === 0 ? (
               <div className="glass rounded-2xl p-12 text-center">
                 <HistoryIcon className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  {t("profile.history.empty")}
-                </p>
+                <p className="text-muted-foreground">{t("profile.history.empty")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

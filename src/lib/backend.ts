@@ -353,10 +353,13 @@ export const userMoviesService = {
     const data = await authApi.post<any>("/movies/reviews/public", { movieLink });
     return extractList(data);
   },
-  async getReviews(movieLink: string): Promise<BackendReview[]> {
-    // ENDPOINT AQUI: GET {AUTH_API}/movies/reviews  → BackendReview[]
-    //return extractList(await authApi.get<BackendReview[] | { items?: BackendReview[] }>("/movies/reviews"));
-    return extractList(await authApi.post<BackendReview[] | { items?: BackendReview[] }>("/movies/SearchReviews", { movieLink }));
+  async getReviews(movieLink: string): Promise<BackendReview[]> {    
+    const response = await authApi.post<BackendReview[] | { items?: BackendReview[] }>(
+      "/movies/SearchReviews", 
+      { movieLink }
+    );
+
+    return extractList(response);
   },
   async createReview(movieLink: string, rating: number, reviewText: string): Promise<void> {
     // ENDPOINT AQUI: POST {AUTH_API}/movies/reviews  body: { movieLink, rating, reviewText }
