@@ -1,16 +1,19 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from "react";
-import { userMoviesService, moviesService, detailToMovie } from "@/lib/backend";
+import { userMoviesService, moviesService, detailToMovie, directorsService } from "@/lib/backend";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Movie } from "@/types/movie";
 
 interface UserListsContextValue {
   favorites: Movie[];
   watchlist: Movie[];
+  directors: string[];
   isLoading: boolean;
   isFavorite: (titleOrLink: string) => boolean;
   isInWatchlist: (titleOrLink: string) => boolean;
+  isDirectorFav: (name: string) => boolean;
   toggleFavorite: (movie: Movie) => boolean;
   toggleWatchlist: (movie: Movie) => boolean;
+  toggleDirector: (name: string) => boolean;
   removeFavorite: (titleOrLink: string) => void;
   removeWatchlist: (titleOrLink: string) => void;
 }
@@ -21,9 +24,11 @@ export const UserListsProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<Movie[]>([]);
   const [watchlist, setWatchlist] = useState<Movie[]>([]);
+  const [directors, setDirectors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const favSlugs = useRef<Set<string>>(new Set());
   const watchSlugs = useRef<Set<string>>(new Set());
+  const dirSet = useRef<Set<string>>(new Set());
 
   // Hidrata una lista de slugs en background
   const hydrateList = (
@@ -44,25 +49,30 @@ export const UserListsProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       setFavorites([]);
       setWatchlist([]);
+      setDirectors([]);
       favSlugs.current = new Set();
       watchSlugs.current = new Set();
+      dirSet.current = new Set();
       return;
     }
     let cancelled = false;
     setIsLoading(true);
     (async () => {
       try {
-        const [favs, watch] = await Promise.all([
+        const [favs, watch, dirs] = await Promise.all([
           userMoviesService.getFavorites(),
           userMoviesService.getWatchlist(),
+          directorsService.getFavorites(),
         ]);
         if (cancelled) return;
         favSlugs.current = new Set(favs);
         watchSlugs.current = new Set(watch);
+        dirSet.current = new Set(dirs);
         hydrateList(favs, setFavorites);
         hydrateList(watch, setWatchlist);
+        setDirectors(dirs);
       } catch {
-        if (!cancelled) { setFavorites([]); setWatchlist([]); }
+        if (!cancelled) { setFavorites([]); setWatchlist([]); setDirectors([]); }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -80,6 +90,11 @@ export const UserListsProvider = ({ children }: { children: ReactNode }) => {
     watchSlugs.current.has(titleOrLink) ||
     watchlist.some((m) => m.title === titleOrLink || m.link === titleOrLink),
     [watchlist]
+  );
+
+  const isDirectorFav = useCallback((name: string) =>
+    dirSet.current.has(name.trim()),
+    [directors]
   );
 
   const toggleFavorite = useCallback((movie: Movie) => {
@@ -126,6 +141,29 @@ export const UserListsProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [watchlist, user]);
 
+  const toggleDirector = useCallback((name: string) => {
+    if (!user) return false;
+    const clean = name.trim();
+    if (!clean) return false;
+    const exists = dirSet.current.has(clean);
+    if (exists) {
+      dirSet.current.delete(clean);
+      setDirectors((prev) => prev.filter((d) => d !== clean));
+      directorsService.removeFavorite(clean).catch(() => {
+        dirSet.current.add(clean);
+        setDirectors((prev) => [...prev, clean]);
+      });
+      return false;
+    }
+    dirSet.current.add(clean);
+    setDirectors((prev) => [...prev, clean]);
+    directorsService.addFavorite(clean).catch(() => {
+      dirSet.current.delete(clean);
+      setDirectors((prev) => prev.filter((d) => d !== clean));
+    });
+    return true;
+  }, [user]);
+
   const removeFavorite = useCallback((titleOrLink: string) => {
     const target = favorites.find((m) => m.title === titleOrLink || m.link === titleOrLink);
     const slug = target?.link || titleOrLink;
@@ -148,9 +186,9 @@ export const UserListsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserListsContext.Provider value={{
-      favorites, watchlist, isLoading,
-      isFavorite, isInWatchlist,
-      toggleFavorite, toggleWatchlist,
+      favorites, watchlist, directors, isLoading,
+      isFavorite, isInWatchlist, isDirectorFav,
+      toggleFavorite, toggleWatchlist, toggleDirector,
       removeFavorite, removeWatchlist,
     }}>
       {children}
