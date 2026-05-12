@@ -151,12 +151,29 @@ export function mapRecoResult(r: RecoResult): Movie {
   };
 }
 
+export type RecoAlgorithm = "self_query" | "hybrid" | "multi_query" | "combined" | "parent";
+
+export const RECO_ALGORITHMS: RecoAlgorithm[] = [
+  "self_query",
+  "hybrid",
+  "multi_query",
+  "combined",
+  "parent",
+];
+
 export const recoService = {
-  async recommend(query: string, lang?: string, max_results: number = 12): Promise<Movie[]> {
-    // ENDPOINT AQUI: POST {RECO_API}/recommend   body: { query, lang }
+  async recommend(
+    query: string,
+    lang?: string,
+    max_results: number = 12,
+    algorithm?: RecoAlgorithm
+  ): Promise<Movie[]> {
+    // ENDPOINT AQUI: POST {RECO_API}/recommend   body: { query, lang, algorithm? }
+    const body: Record<string, unknown> = { query, lang, max_results: 12 };
+    if (algorithm) body.algorithm = algorithm;
     const data = await recoApi.post<RecoResponse>(
       "/recommend",
-      { query, lang, max_results: 12 },
+      body,
       { auth: true } // se enviará bearer si existe; ignorado si no
     );
     return (data.results || []).map(mapRecoResult);
