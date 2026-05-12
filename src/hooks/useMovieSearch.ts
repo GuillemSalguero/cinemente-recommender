@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import type { Movie } from "@/types/movie";
-import { recoService } from "@/lib/backend";
+import { recoService, type RecoAlgorithm } from "@/lib/backend";
 import { useI18n } from "@/i18n/I18nContext";
 
 const MAX = 12;
@@ -15,12 +15,12 @@ export function useMovieSearch() {
   const [allResults, setAllResults] = useState<Movie[]>([]);
 
   const search = useCallback(
-    async (query: string) => {
+    async (query: string, algorithm?: RecoAlgorithm) => {
       if (!query.trim()) return;
       setIsLoading(true);
       setHasSearched(true);
       try {
-        const results = await recoService.recommend(query.trim(), lang);
+        const results = await recoService.recommend(query.trim(), lang, 12, algorithm);
         const capped = results.slice(0, MAX);
         setAllResults(capped);
         // Mostrar las 4 primeras (desktop) y desejar el resto para "load more".

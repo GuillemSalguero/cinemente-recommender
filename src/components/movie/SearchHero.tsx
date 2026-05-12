@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Loader2, Sparkles } from "lucide-react";
+import { Search, Loader2, Sparkles, Cpu } from "lucide-react";
 import { useI18n } from "@/i18n/I18nContext";
+import { RECO_ALGORITHMS, type RecoAlgorithm } from "@/lib/backend";
 
 interface SearchHeroProps {
-  onSearch: (query: string) => void;
+  onSearch: (query: string, algorithm?: RecoAlgorithm) => void;
   isLoading: boolean;
 }
 
 const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
+  const [algorithm, setAlgorithm] = useState<"default" | RecoAlgorithm>("default");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim() && !isLoading) {
-      onSearch(query);
+      onSearch(query, algorithm === "default" ? undefined : algorithm);
     }
   };
 
@@ -81,23 +83,41 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading || !query.trim()}
-          className="gradient-primary mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed md:w-auto md:ml-auto md:mt-3"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t("hero.thinking")}
-            </>
-          ) : (
-            <>
-              <Search className="h-4 w-4" />
-              {t("hero.searchBtn")}
-            </>
-          )}
-        </button>
+        <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <label className="glass flex items-center gap-2 rounded-xl px-3 py-2 text-xs">
+            <Cpu className="h-3.5 w-3.5 text-primary" />
+            <span className="text-muted-foreground">{t("hero.algorithm")}</span>
+            <select
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value as "default" | RecoAlgorithm)}
+              disabled={isLoading}
+              className="bg-transparent text-foreground focus:outline-none"
+            >
+              <option value="default">{t("hero.algoDefault")}</option>
+              {RECO_ALGORITHMS.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="submit"
+            disabled={isLoading || !query.trim()}
+            className="gradient-primary flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed md:w-auto"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("hero.thinking")}
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                {t("hero.searchBtn")}
+              </>
+            )}
+          </button>
+        </div>
       </motion.form>
     </motion.section>
   );

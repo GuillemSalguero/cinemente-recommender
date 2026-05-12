@@ -38,6 +38,8 @@ export const dict = {
   "hero.searchBtn": { es: "Buscar Películas", ca: "Cerca pel·lícules", de: "Filme suchen", fr: "Chercher des films" },
   "hero.newSearch": { es: "← Nueva búsqueda", ca: "← Nova cerca", de: "← Neue Suche", fr: "← Nouvelle recherche" },
   "hero.recommendations": { es: "recomendaciones", ca: "recomanacions", de: "Empfehlungen", fr: "recommandations" },
+  "hero.algorithm": { es: "Algoritmo IA", ca: "Algorisme IA", de: "KI-Algorithmus", fr: "Algorithme IA" },
+  "hero.algoDefault": { es: "Por defecto", ca: "Per defecte", de: "Standard", fr: "Par défaut" },
 
   // Common
   "common.loading": { es: "Cargando...", ca: "Carregant...", de: "Laden...", fr: "Chargement..." },
