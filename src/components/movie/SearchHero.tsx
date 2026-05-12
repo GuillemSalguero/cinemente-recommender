@@ -3,6 +3,13 @@ import { motion } from "framer-motion";
 import { Search, Loader2, Sparkles, Cpu } from "lucide-react";
 import { useI18n } from "@/i18n/I18nContext";
 import { RECO_ALGORITHMS, type RecoAlgorithm } from "@/lib/backend";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SearchHeroProps {
   onSearch: (query: string, algorithm?: RecoAlgorithm) => void;
