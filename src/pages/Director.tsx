@@ -39,14 +39,14 @@ const Director = () => {
           year: m.originalReleaseDate ? m.originalReleaseDate.split('-')[0] : "N/A",
           director: m.directors || m.director || directorName,
           tomatometer: m.tomatometerRating || 0,
-          posterUrl: m.poster_url || m.posterUrl || "",  // ← añade poster_url primero
+          posterUrl: m.poster_url || m.posterUrl || "",
           description: m.movieInfo || m.criticsConsensus || "",
           genre: m.genres || "",
           runtime: m.runtime || 0,
           reason: "",
           link: m.rottenTomatoesLink || m.link || "",
         }));
-      console.log("NORMALIZED:", normalizedMovies[0]); // ← añade esto
+      console.log("NORMALIZED:", normalizedMovies[0]); 
       setMovies(normalizedMovies);
     } catch (err) {
       setError("No se pudieron cargar las películas");

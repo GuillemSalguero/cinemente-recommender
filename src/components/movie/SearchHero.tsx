@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Search, Loader2, Sparkles, Cpu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Loader2, Sparkles, Cpu, Info } from "lucide-react";
 import { useI18n } from "@/i18n/I18nContext";
 import { RECO_ALGORITHMS, type RecoAlgorithm } from "@/lib/backend";
 import {
@@ -11,6 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Si el teu TS es queixa a l'hora de fer t(`algorithms.${hoveredAlgo}`), pots importar el tipus.
+// import { type DictKey } from "@/i18n/translations"; // o la ruta on tinguis el DictKey
+
 interface SearchHeroProps {
   onSearch: (query: string, algorithm?: RecoAlgorithm) => void;
   isLoading: boolean;
@@ -20,6 +23,9 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [algorithm, setAlgorithm] = useState<"default" | RecoAlgorithm>("default");
+  
+  // Guardem l'algorisme sobre el qual tenim el ratolí (excepte el default)
+  const [hoveredAlgo, setHoveredAlgo] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,42 +97,77 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
         </div>
 
         <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <Select
-            value={algorithm}
-            onValueChange={(v) => setAlgorithm(v as "default" | RecoAlgorithm)}
-            disabled={isLoading}
-          >
-            <SelectTrigger
-              className="glass glass-hover group h-auto w-auto gap-2.5 rounded-full border-white/[0.06] py-2 pl-3 pr-3.5 text-xs shadow-none transition-all duration-300 focus:ring-0 focus:ring-offset-0 data-[state=open]:border-primary/30 data-[state=open]:glow-primary-sm"
+          
+          {/* Contenidor relatiu per posicionar el selector i el tooltip correctament */}
+          <div className="relative flex items-center">
+            <Select
+              value={algorithm}
+              onValueChange={(v) => setAlgorithm(v as "default" | RecoAlgorithm)}
+              disabled={isLoading}
+              onOpenChange={(isOpen) => !isOpen && setHoveredAlgo(null)}
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-primary shadow-md transition-transform duration-300 group-hover:scale-110">
-                <Cpu className="h-3 w-3 text-primary-foreground" />
-              </span>
-              <span className="text-[0.7rem] uppercase tracking-widest text-muted-foreground">
-                {t("hero.algorithm")}
-              </span>
-              <span className="text-xs font-semibold text-foreground">
-                <SelectValue />
-              </span>
-            </SelectTrigger>
-            <SelectContent className="glass rounded-xl border-white/[0.08] p-1.5 shadow-2xl">
-              <SelectItem
-                value="default"
-                className="rounded-lg text-xs font-medium focus:bg-primary/10 focus:text-primary"
+              <SelectTrigger
+                className="glass glass-hover group h-auto w-auto gap-2.5 rounded-full border-white/[0.06] py-2 pl-3 pr-3.5 text-xs shadow-none transition-all duration-300 focus:ring-0 focus:ring-offset-0 data-[state=open]:border-primary/30 data-[state=open]:glow-primary-sm"
               >
-                ✨ {t("hero.algoDefault")}
-              </SelectItem>
-              {RECO_ALGORITHMS.map((a) => (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-primary shadow-md transition-transform duration-300 group-hover:scale-110">
+                  <Cpu className="h-3 w-3 text-primary-foreground" />
+                </span>
+                <span className="text-[0.7rem] uppercase tracking-widest text-muted-foreground">
+                  {t("hero.algorithm")}
+                </span>
+                <span className="text-xs font-semibold text-foreground">
+                  <SelectValue />
+                </span>
+              </SelectTrigger>
+
+              <SelectContent className="glass rounded-xl border-white/[0.08] p-1.5 shadow-2xl">
+                {/* 1. L'opció 'default' ja NO té onPointerEnter, així que no obre el popup */}
                 <SelectItem
-                  key={a}
-                  value={a}
-                  className="rounded-lg font-mono text-xs focus:bg-primary/10 focus:text-primary"
+                  value="default"
+                  className="rounded-lg text-xs font-medium focus:bg-primary/10 focus:text-primary"
                 >
-                  {a}
+                  ✨ {t("hero.algoDefault")}
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                
+                {RECO_ALGORITHMS.map((a) => (
+                  <SelectItem
+                    key={a}
+                    value={a}
+                    className="rounded-lg font-mono text-xs focus:bg-primary/10 focus:text-primary"
+                    onPointerEnter={() => setHoveredAlgo(a)}
+                    onPointerLeave={() => setHoveredAlgo(null)}
+                  >
+                    {a}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* 2. Tooltip de l'Algorisme */}
+            <AnimatePresence>
+              {hoveredAlgo && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, x: -10, filter: "blur(4px)" }}
+                  transition={{ duration: 0.2 }}
+                  // L'ancla a la dreta (left-full + ml-4) i el centra verticalment (top-1/2 -translate-y-1/2)
+                  className="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-64 glass rounded-xl border-white/[0.08] p-4 shadow-2xl z-[100] hidden md:flex flex-col gap-2 pointer-events-none"
+                >
+                  <div className="flex items-center gap-2 text-primary">
+                    <Info className="h-4 w-4" />
+                    <span className="text-sm font-semibold capitalize tracking-wide">
+                      {hoveredAlgo.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {/* Utilitzem la funció del teu diccionari per renderitzar dinàmicament el text. Posem "as any" per evitar errors de tipat ràpids en el TypeScript */}
+                    {t(`algorithms.${hoveredAlgo}` as any)}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <button
             type="submit"

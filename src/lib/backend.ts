@@ -348,7 +348,7 @@ export const userMoviesService = {
   // ---- Favorites ----
   async getFavorites(): Promise<string[]> {
     const data = await authApi.get<any[]>("/movies/favorites");
-    // ✅ Extraer solo el movieLink de cada objeto
+    // Extraer solo el movieLink de cada objeto
     return extractList(data).map((item) =>
       typeof item === "string" ? item : item.movieLink
     );
@@ -444,12 +444,6 @@ export const friendsService = {
 };
 
 // ============== Directores favoritos (STUB) ==============
-// TODO: cuando estén los endpoints reales, sustituir el cuerpo de cada función por
-//   GET    {AUTH_API}/directors/favorites              -> string[]
-//   POST   {AUTH_API}/directors/favorites  { name }
-//   DELETE {AUTH_API}/directors/favorites  { name }
-// La firma pública (Promise<string[]> / Promise<void>) ya está pensada para no
-// tener que tocar el hook useFavoriteDirectors al cambiar al backend real.
 
 export const directorsService = {
   async getFavorites(): Promise<string[]> {

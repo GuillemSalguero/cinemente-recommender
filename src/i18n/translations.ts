@@ -20,6 +20,38 @@ export const dict = {
   "auth.login": { es: "Iniciar sesión", ca: "Inicia sessió", de: "Anmelden", fr: "Se connecter" },
   "auth.logout": { es: "Cerrar sesión", ca: "Tanca sessió", de: "Abmelden", fr: "Se déconnecter" },
 
+  "algorithms.hybrid": {
+    es: "Búsqueda equilibrada. La opción recomendada para encontrar rápidamente buenas sugerencias.",
+    ca: "Cerca equilibrada. L'opció recomanada per trobar ràpidament bones suggerències.",
+    de: "Ausgewogene Suche. Die empfohlene Option, um schnell gute Vorschläge zu finden.",
+    fr: "Recherche équilibrée. L'option recommandée pour trouver rapidement de bonnes suggestions."
+  },
+  "algorithms.self_query": {
+    es: "Ideal para descubrir películas sobre temas concretos, documentales, biopics o escenarios específicos.",
+    ca: "Ideal per descobrir pel·lícules sobre temes concrets, documentals, biopics o escenaris específics.",
+    de: "Ideal, um Filme zu bestimmten Themen, Dokumentationen, Biografien oder spezifischen Szenarien zu entdecken.",
+    fr: "Idéal pour découvrir des films sur des thèmes précis, des documentaires, des biopics ou des scénarios spécifiques."
+  },
+  "algorithms.multi_query": {
+    es: "Perfecto si no tienes claro qué buscas. La IA explorará múltiples ángulos para sorprenderte.",
+    ca: "Perfecte si no tens clar què busques. La IA explorarà múltiples angles per sorprendre't.",
+    de: "Perfekt, wenn du nicht genau weißt, was du suchst. Die KI sucht aus verschiedenen Blickwinkeln, um dich zu überraschen.",
+    fr: "Parfait si vous ne savez pas exactement ce que vous cherchez. L'IA explorera plusieurs angles pour vous surprendre."
+  },
+  "algorithms.combined": {
+    es: "Encuentra un amplio abanico de recomendaciones centrándose estrictamente en el género o director que pidas.",
+    ca: "Troba un ampli ventall de recomanacions centrant-se estrictament en el gènere o director que demanis.",
+    de: "Findet eine breite Palette von Empfehlungen mit striktem Fokus auf das gewünschte Genre oder den Regisseur.",
+    fr: "Trouve un large éventail de recommandations en se concentrant strictement sur le genre ou le réalisateur demandé."
+  },
+  "algorithms.parent": {
+    es: "Algoritmo profundo diseñado para encontrar películas sobre temas de nicho, rarezas y argumentos poco convencionales.",
+    ca: "Algorisme profund dissenyat per trobar pel·lícules sobre temes de nínxol, rareses i arguments poc convencionals.",
+    de: "Tiefgreifender Algorithmus für Nischenthemen, Raritäten und unkonventionelle Handlungen.",
+    fr: "Algorithme profond conçu pour trouver des films sur des sujets de niche, des raretés et des intrigues non conventionnelles."
+  },
+
+
   // Hero
   "hero.tag": { es: "Búsqueda inteligente", ca: "Cerca intel·ligent", de: "Intelligente Suche", fr: "Recherche intelligente" },
   "hero.subtitle": {
