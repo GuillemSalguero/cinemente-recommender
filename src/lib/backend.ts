@@ -98,10 +98,8 @@ export const authService = {
 
 // ============== Recomendaciones ==============
 
-/** Convierte un slug "m/ex_machina_2015" → "Ex Machina". */
 export function titleFromSlug(slug: string): string {
   const raw = slug.replace(/^m\//, "").replace(/_/g, " ").trim();
-  // Quita un año al final tipo "ex machina 2015"
   const noYear = raw.replace(/\s+\d{4}$/, "").trim();
   return noYear
     .split(" ")

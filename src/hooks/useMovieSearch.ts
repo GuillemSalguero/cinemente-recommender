@@ -41,7 +41,7 @@ export function useMovieSearch() {
     async (isMobile: boolean) => {
       if (movies.length >= MAX || movies.length >= allResults.length) return;
       setIsLoadingMore(true);
-      // Pequeño delay para mantener la transición fluida.
+      // Small delay to keep the transition fluid.
       await new Promise((r) => setTimeout(r, 300));
       const count = isMobile ? 3 : 4;
       const next = allResults.slice(0, Math.min(MAX, movies.length + count));
