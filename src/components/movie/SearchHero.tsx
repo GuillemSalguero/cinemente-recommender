@@ -90,30 +90,43 @@ const SearchHero = ({ onSearch, isLoading }: SearchHeroProps) => {
           />
         </div>
 
-        <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="glass flex items-center gap-2 rounded-xl px-3 py-1.5">
-            <Cpu className="h-3.5 w-3.5 shrink-0 text-primary" />
-            <span className="text-xs text-muted-foreground">{t("hero.algorithm")}</span>
-            <Select
-              value={algorithm}
-              onValueChange={(v) => setAlgorithm(v as "default" | RecoAlgorithm)}
-              disabled={isLoading}
+        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <Select
+            value={algorithm}
+            onValueChange={(v) => setAlgorithm(v as "default" | RecoAlgorithm)}
+            disabled={isLoading}
+          >
+            <SelectTrigger
+              className="glass glass-hover group h-auto w-auto gap-2.5 rounded-full border-white/[0.06] py-2 pl-3 pr-3.5 text-xs shadow-none transition-all duration-300 focus:ring-0 focus:ring-offset-0 data-[state=open]:border-primary/30 data-[state=open]:glow-primary-sm"
             >
-              <SelectTrigger className="h-8 w-auto min-w-[8rem] gap-2 border-0 bg-transparent px-2 text-xs font-medium text-foreground shadow-none focus:ring-0 focus:ring-offset-0 hover:text-primary">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-primary shadow-md transition-transform duration-300 group-hover:scale-110">
+                <Cpu className="h-3 w-3 text-primary-foreground" />
+              </span>
+              <span className="text-[0.7rem] uppercase tracking-widest text-muted-foreground">
+                {t("hero.algorithm")}
+              </span>
+              <span className="text-xs font-semibold text-foreground">
                 <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="glass border-border/50">
-                <SelectItem value="default" className="text-xs">
-                  {t("hero.algoDefault")}
+              </span>
+            </SelectTrigger>
+            <SelectContent className="glass rounded-xl border-white/[0.08] p-1.5 shadow-2xl">
+              <SelectItem
+                value="default"
+                className="rounded-lg text-xs font-medium focus:bg-primary/10 focus:text-primary"
+              >
+                ✨ {t("hero.algoDefault")}
+              </SelectItem>
+              {RECO_ALGORITHMS.map((a) => (
+                <SelectItem
+                  key={a}
+                  value={a}
+                  className="rounded-lg font-mono text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  {a}
                 </SelectItem>
-                {RECO_ALGORITHMS.map((a) => (
-                  <SelectItem key={a} value={a} className="text-xs font-mono">
-                    {a}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              ))}
+            </SelectContent>
+          </Select>
 
           <button
             type="submit"
