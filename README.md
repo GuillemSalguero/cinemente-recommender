@@ -94,7 +94,7 @@ src/
 |---------|-----------|
 | AI engine (FastAPI) | [Recomenador](https://github.com/GuillemSalguero/Recomenador) |
 | Evaluation suite | [Testing-Recomenador](https://github.com/GuillemSalguero/Testing-Recomenador) |
-| User backend (Spring Boot) | [add link] |
+| User backend (Spring Boot) | [https://github.com/GuillemSalguero/cinementeWs]  |
 
 ---
 
